@@ -1,0 +1,131 @@
+{
+  "_주석": "키가 없는 공개용 설정입니다. config.json 이 없으면 이 파일이 쓰입니다(키가 없어 수집은 건너뜁니다).",
+  "_인증키": "koroad·facility·kma 는 공공데이터포털 일반 인증키 하나로 다 됩니다(계정당 하나). its 만 국가교통정보센터에서 따로 발급받습니다.",
+  "koroad": {
+    "_발급": "https://www.data.go.kr → '교통사고 다발지역' 검색 → 레이어마다 활용신청. 승인돼야 호출됩니다.",
+    "_안내": "연 단위 통계이고 공표가 1~2년 늦습니다. year 부터 year_back 년 거슬러 올라가며 값이 있는 해를 찾습니다.",
+    "key": "",
+    "_지역코드": "법정동코드 앞 5자리(세종 36110)를 2+3 으로 쪼갠 값입니다.",
+    "sido": "36",
+    "gugun": "110",
+    "year": null,
+    "year_back": 3,
+    "rows_per_page": 100,
+    "_레이어": "lg 전체 / schoolzone 스쿨존어린이 / jaywalk 무단횡단 / freezing 결빙 / child 어린이보행 / oldman 노인보행 / pedestrian 보행자 / bicycle 자전거 / motorcycle 이륜차 / death 사망사고",
+    "layers": [
+      "lg",
+      "schoolzone",
+      "jaywalk",
+      "freezing",
+      "child",
+      "oldman",
+      "pedestrian",
+      "bicycle",
+      "motorcycle",
+      "death"
+    ],
+    "_엔드포인트": "요청주소가 문서로 확인된 것은 코드에 박혀 있습니다(lg, schoolzone, jaywalk, freezing). 나머지는 python run.py --probe --only koroad --save 로 확정한 뒤 여기에 자동으로 적힙니다.",
+    "endpoints": {},
+    "extra_params": {}
+  },
+  "its": {
+    "_발급": "https://www.its.go.kr/opendata → 회원가입 → 인증키 신청. 공공데이터포털 키와 다릅니다.",
+    "_제약": "국내 IP 에서만 응답합니다(해외에서는 연결 거부). 개발계정은 1,000건/일이라 10분 주기면 하루 432건으로 들어가지만, 운영계정 신청을 권합니다.",
+    "_커버리지": "고속도로·국도 중심입니다. 세종시 관리 시도(市道)는 대부분 잡히지 않습니다.",
+    "key": "",
+    "flow_endpoint": "https://openapi.its.go.kr:9443/trafficInfo",
+    "event_endpoint": "https://openapi.its.go.kr:9443/eventInfo",
+    "cctv_endpoint": "https://openapi.its.go.kr:9443/cctvInfo",
+    "road_type": "all",
+    "drc_type": "all",
+    "event_type": "all",
+    "cctv": false,
+    "cctv_type": "1",
+    "timeout": 20,
+    "_범위": "세종시 경계 사각형 [minX(경도), minY(위도), maxX, maxY].",
+    "bbox": [
+      127.05,
+      36.34,
+      127.45,
+      36.75
+    ]
+  },
+  "facility": {
+    "_발급": "https://www.data.go.kr → '전국무인교통단속카메라표준데이터'(15028200), '전국 어린이보호구역'(15012891) 등 활용신청. 인증키는 포털 계정 공통입니다.",
+    "_안내": "전국 자료라 시도명으로 먼저 걸러 보고, 필터가 안 먹으면 전수를 훑어 '세종'이 든 행만 남깁니다. 전수 훑기는 max_pages 로 막아 둡니다.",
+    "key": "",
+    "layers": [
+      "camera",
+      "child_zone",
+      "elder_zone",
+      "crosswalk",
+      "bike_road"
+    ],
+    "region_field": "ctprvnNm",
+    "region_value": "세종특별자치시",
+    "rows_per_page": 500,
+    "max_pages": 30,
+    "_엔드포인트": "camera·child_zone 만 확인됐습니다. 나머지는 python run.py --probe --only facility --save 로 확정하십시오.",
+    "endpoints": {}
+  },
+  "kma": {
+    "_발급": "https://www.data.go.kr → '기상청 단기예보 조회서비스' → 활용신청",
+    "key": "",
+    "lat": 36.48,
+    "lon": 127.289,
+    "nx": null,
+    "ny": null,
+    "forecast_hours": 24,
+    "warnings": false,
+    "stn_id": "133",
+    "_특보": "기상특보는 '기상청_기상특보 조회서비스'를 따로 활용신청해야 합니다. 신청 후 true 로. 133 = 대전·세종."
+  },
+  "site": {
+    "_카운터": "provider: hits | custom | goatcounter | none. hits 는 hits.sh 배지라 가입 없이 바로 뜨고 오늘/전체를 함께 보여줍니다. 다만 새로고침마다 올라가므로 '방문자 수'가 아니라 '조회수'입니다 — 라벨을 그렇게 맞춰 두었습니다.",
+    "_카운터_주의": "target 은 hits.sh 가 쓰는 집계 열쇠입니다. 저장소·주소가 정해지면 실제 공개주소로 맞추십시오. 나중에 바꾸면 그 시점부터 새로 셉니다.",
+    "_카운터_순방문": "새로고침을 빼고 진짜 방문자 수를 세려면 tools/counter-worker.js 를 Cloudflare Workers 에 띄우고(COUNT_MODE=unique), provider 를 custom, url 을 워커 주소로, label 을 '방문자 수' 로 바꾸십시오.",
+    "counter": {
+      "provider": "hits",
+      "target": "ysong86.github.io/traffic_sejong",
+      "label": "조회수",
+      "url": "",
+      "code": "",
+      "path": "/"
+    },
+    "_문의": "org 는 기관 한 줄, members 는 참여자 목록(가운뎃점으로 이어 붙여 아랫줄에 표시), email 은 대표 문의처. role 은 '제작' 대신 '작성' 등으로 바꿀 수 있습니다.",
+    "contact": {
+      "org": "세종연구원 도시안전연구센터",
+      "members": [
+        "안용준 센터장",
+        "송양호 책임연구위원",
+        "주재성 전문연구위원",
+        "최유라 전문연구위원"
+      ],
+      "email": "ayj826@sri.re.kr",
+      "role": "제작"
+    },
+    "_고지": "샘플 데이터로 공개할 때 화면 맨 위에 굵게 뜨는 문구입니다. 실측이 연동되면 이 배너는 저절로 사라집니다.",
+    "notice": "이 화면의 수치는 실제 통계·관측값이 아닙니다. 샘플 데이터에 해당하며, 현재 실시간 자료를 연동하는 과정입니다.",
+    "_배경지도": "지도 위 '배경지도' 칩으로 켜는 타일 레이어입니다. 켜야만 타일 서버로 요청이 나갑니다(끄면 바깥 요청 0). url 을 빈 문자열로 두면 칩 자체가 사라집니다.",
+    "_배경지도_주의": "openstreetmap.org 타일은 자원봉사자가 운영하는 서버입니다. 대외 공개 서비스로 상시 운영할 거면 국토교통부 VWorld 로 바꾸십시오. vworld.kr 에서 인증키를 받고 사용할 도메인을 등록한 뒤 url 을 'https://api.vworld.kr/req/wmts/1.0.0/여기에_VWORLD_키/Base/{z}/{y}/{x}.png', attribution 을 '© VWorld 국토교통부' 로 두면 됩니다. 자리표시자는 이름으로 바꿔치기하므로 {z}/{y}/{x} 순서라도 그대로 동작합니다.",
+    "basemap": {
+      "provider": "osm",
+      "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "attribution": "© OpenStreetMap 기여자",
+      "max_zoom": 18,
+      "label": "배경지도"
+    },
+    "refresh_minutes": 5,
+    "_자동갱신": "화면이 스스로 갱신 시각을 확인해 바뀌었을 때만 다시 읽습니다. 0 이면 끔.",
+    "show_endpoints": false,
+    "_엔드포인트": "true 로 두면 화면 하단에 사용한 API 주소를 표시합니다(문제 추적용). 공개 화면에서는 꺼둡니다."
+  },
+  "deploy": {
+    "_안내": "git 없이 GitHub Contents API 로 올릴 때 씁니다.",
+    "_토큰": "https://github.com/settings/tokens?type=beta 에서 해당 저장소에 Contents=Read and write 권한만. 환경변수 GITHUB_TOKEN 으로 줘도 됩니다.",
+    "repo": "",
+    "branch": "gh-pages",
+    "path": "index.html",
+    "token": ""
+  }
+}

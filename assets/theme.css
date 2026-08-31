@@ -1,0 +1,1083 @@
+/* 세종시 물환경 상황판 — 테마
+ *
+ * 기본은 라이트. 시스템이 다크여도 자동으로 어두워지지 않는다(공공 화면이라
+ * 처음 보는 사람에게 밝은 쪽이 덜 부담스럽다). 우상단 토글로 바꾸면
+ * 그 선택이 브라우저에 기억된다.
+ *
+ * 색은 전부 토큰으로만 쓴다. 지도 SVG 도 같은 토큰을 참조하므로
+ * 여기서 값을 바꾸면 지도까지 따라 바뀐다.
+ */
+
+:root {
+  --bg: #f4f7fb;
+  --bg-grad: radial-gradient(1200px 600px at 15% -10%, #e8f1fa 0%, transparent 60%),
+             radial-gradient(900px 500px at 95% 0%, #eef4ec 0%, transparent 55%);
+  --panel: #ffffff;
+  --panel-2: #f3f7fb;
+  --panel-3: #e9f0f7;
+  --line: rgba(16, 42, 70, 0.10);
+  --line-2: rgba(16, 42, 70, 0.05);
+
+  --fg: #0e2038;
+  --fg-2: #34506e;
+  --muted: #6a819a;
+
+  --accent: #0b6fa8;
+  --accent-2: #0891b2;
+  --accent-soft: rgba(11, 111, 168, 0.10);
+
+  --shadow-1: 0 1px 2px rgba(16, 42, 70, .05), 0 1px 3px rgba(16, 42, 70, .04);
+  --shadow-2: 0 2px 4px rgba(16, 42, 70, .05), 0 12px 28px -14px rgba(16, 42, 70, .22);
+
+  /* 심각도 단계 — 위험도·소통등급이 공유한다 */
+  --st-normal: #0d8a52;
+  --st-watch: #b47407;
+  --st-warning: #c8500f;
+  --st-alert: #c02434;
+  --st-serious: #8d1020;
+  --st-unknown: #8496a8;
+
+  /* 사고 레이어 */
+  --acc-base: #0b6fa8;      /* 전체 다발지 */
+  --acc-vuln: #b4380f;      /* 취약계층(어린이·노인·보행·자전거·이륜차) */
+  --acc-school: #c02434;    /* 스쿨존 */
+  --acc-walk: #d97706;      /* 보행·무단횡단 */
+  --acc-freeze: #0891b2;    /* 결빙 */
+  --acc-death: #8d1020;     /* 사망사고 */
+
+  /* 시설 */
+  --fac-camera: #6d28d9;
+  --fac-child: #be185d;
+  --fac-elder: #9d174d;
+
+  /* 돌발상황 */
+  --ev-acc: #c02434;
+  --ev-work: #b47407;
+  --ev-weather: #0891b2;
+  --ev-etc: #6a819a;
+
+  /* 소통 등급 */
+  --flow-smooth: #0d8a52;
+  --flow-slow: #b47407;
+  --flow-delay: #c8500f;
+  --flow-jam: #c02434;
+
+  /* 지도 */
+  --map-bg: #eaf0f6;
+  --map-land: #ffffff;
+  --map-line: rgba(16, 42, 70, 0.15);
+  --map-city: rgba(16, 42, 70, 0.55);
+  --map-label: #2c4360;
+  --map-halo: #ffffff;
+
+  /* 읍면동 면 — 채도는 낮게, 경계선은 또렷하게.
+     색상(hue)은 면마다 다르게 인라인으로 주고 여기서 채도·명도만 잡는다. */
+  --ad-fill-s: 62%;
+  --ad-fill-l: 92%;
+  --ad-fill-a: 0.72;
+  --ad-line-s: 42%;
+  --ad-line-l: 46%;
+  --ad-line-a: 0.55;
+
+  /* 도로 등급 */
+  --road-expressway: #1f3d63;
+  --road-brt: #c2410c;
+  --road-arterial: #2563a8;
+  --road-sub: #5b8cbe;
+  --road-collector: #93aec9;
+  --road-hover: #0aa2dd;
+  --road-label: #1f3d63;
+
+  --sans: "Pretendard Variable", Pretendard, "Malgun Gothic", -apple-system,
+          BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "Pretendard Variable", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 16px;
+}
+
+[data-theme="dark"] {
+  --bg: #08101d;
+  --bg-grad: radial-gradient(1200px 600px at 15% -10%, #0d1e33 0%, transparent 60%),
+             radial-gradient(900px 500px at 95% 0%, #0b2028 0%, transparent 55%);
+  --panel: #101c2e;
+  --panel-2: #16243a;
+  --panel-3: #1d2e48;
+  --line: rgba(150, 185, 220, 0.14);
+  --line-2: rgba(150, 185, 220, 0.07);
+
+  --fg: #e9f1f9;
+  --fg-2: #b9cade;
+  --muted: #8199b3;
+
+  --accent: #3fbdf0;
+  --accent-2: #22d3ee;
+  --accent-soft: rgba(63, 189, 240, 0.14);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, .4), 0 16px 34px -18px rgba(0, 0, 0, .85);
+
+  --st-normal: #35d08a;
+  --st-watch: #f0b429;
+  --st-warning: #fb923c;
+  --st-alert: #f87171;
+  --st-serious: #ef4444;
+  --st-unknown: #64798f;
+
+  --acc-base: #3fbdf0;
+  --acc-vuln: #fb923c;
+  --acc-school: #f87171;
+  --acc-walk: #fbbf24;
+  --acc-freeze: #22d3ee;
+  --acc-death: #ef4444;
+
+  --fac-camera: #a78bfa;
+  --fac-child: #f472b6;
+  --fac-elder: #fb7185;
+
+  --ev-acc: #f87171;
+  --ev-work: #f0b429;
+  --ev-weather: #22d3ee;
+  --ev-etc: #8199b3;
+
+  --flow-smooth: #35d08a;
+  --flow-slow: #f0b429;
+  --flow-delay: #fb923c;
+  --flow-jam: #f87171;
+
+  --map-bg: #0b1524;
+  --map-land: #142339;
+  --map-line: rgba(150, 185, 220, 0.16);
+  --map-city: rgba(150, 185, 220, 0.62);
+  --map-label: #b7cbe0;
+  --map-halo: #08101d;
+
+  /* 다크에서는 같은 색상환을 어둡게·덜 밝게 쓴다. 안 그러면 면이 눈을 때린다. */
+  --ad-fill-s: 38%;
+  --ad-fill-l: 22%;
+  --ad-fill-a: 0.62;
+  --ad-line-s: 45%;
+  --ad-line-l: 62%;
+  --ad-line-a: 0.5;
+
+  --road-expressway: #9dc3ea;
+  --road-brt: #fb923c;
+  --road-arterial: #57a5e0;
+  --road-sub: #3a76a8;
+  --road-collector: #2c4c6c;
+  --road-hover: #7dd3fc;
+  --road-label: #bcd8f2;
+}
+
+/* --------------------------------------------------------------- 기본 */
+
+* { box-sizing: border-box; }
+
+html { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: var(--accent); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.wrap {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 26px 24px 64px;
+}
+
+/* --------------------------------------------------------------- 헤더 */
+
+header.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+header.top h1 {
+  margin: 0;
+  font-size: clamp(19px, 2.4vw, 25px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  background: linear-gradient(100deg, var(--fg) 30%, var(--accent) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+header.top .grow { flex: 1; }
+header.top .sub {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.badge::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badge.demo {
+  background: color-mix(in srgb, var(--st-warning) 14%, transparent);
+  color: var(--st-warning);
+  border: 1px solid color-mix(in srgb, var(--st-warning) 32%, transparent);
+}
+.badge.live {
+  background: color-mix(in srgb, var(--st-normal) 13%, transparent);
+  color: var(--st-normal);
+  border: 1px solid color-mix(in srgb, var(--st-normal) 30%, transparent);
+}
+.badge.live::before { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+
+/* 테마 토글 */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 999px;
+  box-shadow: var(--shadow-1);
+}
+.theme-toggle button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  padding: 5px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease;
+}
+.theme-toggle button:hover { color: var(--fg); }
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------- 보기 선택 */
+
+.viewbar {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  margin-bottom: 14px;
+}
+.vw-label {
+  color: var(--muted); font-size: 11px; font-weight: 600;
+  letter-spacing: .04em; margin-right: 3px;
+}
+.vw {
+  background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+  border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 11.5px;
+  cursor: pointer; transition: all .14s ease; box-shadow: var(--shadow-1);
+}
+.vw:hover { color: var(--fg); border-color: var(--accent); }
+.vw.on {
+  background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent); font-weight: 700;
+}
+.vw::before { content: "☐ "; }
+.vw.on::before { content: "☑ "; }
+
+/* --------------------------------------------------------------- KPI */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.kpi {
+  position: relative;
+  overflow: hidden;
+  padding: 15px 17px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-1);
+  transition: transform .18s cubic-bezier(.2,.7,.3,1), box-shadow .18s ease;
+}
+.kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+.kpi::before {
+  content: "";
+  position: absolute; inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 35%, transparent));
+}
+.kpi::after {
+  content: "";
+  position: absolute; right: -30px; top: -30px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: var(--c);
+  opacity: .06;
+}
+.kpi .l { color: var(--muted); font-size: 11.5px; letter-spacing: .01em; }
+.kpi .v {
+  margin: 5px 0 2px;
+  font-size: clamp(23px, 2.6vw, 29px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  color: var(--c);
+  font-variant-numeric: tabular-nums;
+}
+.kpi .s { color: var(--muted); font-size: 12px; }
+
+/* --------------------------------------------------------------- 관측시각 */
+
+.freshbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-1);
+}
+.fresh-title {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.fresh-note { color: var(--muted); font-size: 10.5px; margin-left: auto; }
+.fr {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 4px 11px 4px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c) 8%, var(--panel-2));
+  border: 1px solid color-mix(in srgb, var(--c) 22%, transparent);
+}
+.fr .l { font-size: 11px; color: var(--fg-2); }
+.fr .t {
+  font-size: 12px; font-weight: 700; color: var(--c);
+  font-variant-numeric: tabular-nums;
+}
+.fr .a { font-size: 10.5px; color: var(--muted); }
+
+/* --------------------------------------------------------------- 패널 */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 17px 19px 19px;
+  box-shadow: var(--shadow-1);
+}
+.panel > h2 {
+  margin: 0 0 4px;
+  font-size: 14.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel > h2 .src {
+  margin-left: auto;
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+.panel .note { color: var(--muted); font-size: 11.5px; margin: 0 0 13px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px;
+}
+
+/* --------------------------------------------------------------- 탐색 3분할 */
+
+.explorer {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr) 336px;
+  gap: 14px;
+  margin-bottom: 16px;
+  align-items: start;
+}
+.explorer > .panel { padding: 15px 16px 17px; }
+/* 관측지점이 없을 때는 지도만 나오므로 전체 폭을 쓴다 */
+.explorer.nodata { grid-template-columns: 1fr; }
+.explorer.nodata .map { max-height: min(78vh, 820px); }
+
+.side { max-height: min(78vh, 760px); overflow-y: auto; scrollbar-width: thin; }
+/* 관측지점 묶음 — +/- 로 접고 편다 */
+.grp + .grp { margin-top: 3px; }
+.grphead {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  background: transparent; border: 0; cursor: pointer; color: var(--fg-2);
+  font: inherit; font-size: 12px; font-weight: 700; text-align: left;
+  padding: 7px 8px; border-radius: var(--r-sm);
+  transition: background .14s ease;
+}
+.grphead:hover { background: var(--panel-2); }
+.grphead .tw {
+  flex: none; width: 15px; height: 15px; border-radius: 4px;
+  border: 1px solid var(--line); position: relative;
+  background: var(--panel-2);
+}
+.grphead .tw::before, .grphead .tw::after {
+  content: ""; position: absolute; background: var(--fg-2);
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+}
+.grphead .tw::before { width: 7px; height: 1.5px; }
+.grphead .tw::after  { width: 1.5px; height: 7px; transition: opacity .14s ease; }
+.grp.open .grphead .tw::after { opacity: 0; }          /* 펼치면 + 가 - 로 */
+.grphead .gn { flex: 1; }
+.grphead .gc {
+  color: var(--muted); font-weight: 600; font-size: 11px;
+  background: var(--panel-2); border-radius: 999px; padding: 1px 8px;
+}
+.grpbody { display: none; padding: 2px 0 6px 4px; }
+.grp.open .grpbody { display: block; }
+
+.alerts li.lifted { opacity: .55; }
+.alerts li.lifted b { font-weight: 600; }
+
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  padding: 7px 10px;
+  color: var(--fg);
+  font: inherit;
+  margin-bottom: 2px;
+  transition: background .14s ease, border-color .14s ease, transform .14s ease;
+}
+.pick:hover { background: var(--panel-2); transform: translateX(2px); }
+.pick.sel {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.pick .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.pick .dot.tri {
+  border-radius: 0; width: 11px; height: 10px;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.pick .dot.sq { border-radius: 2px; }
+.pick .dot.dia { border-radius: 2px; transform: rotate(45deg); }
+.pick .dot.bar { border-radius: 1px; width: 13px; height: 5px; }
+.pick .dot.pent { border-radius: 2px; clip-path: polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%); width: 11px; height: 11px; }
+.pick .nm {
+  flex: 1; font-size: 12.5px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pick .vv {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-feature-settings: "tnum";
+}
+.pick.sel .vv { color: var(--fg); font-weight: 600; }
+
+/* --------------------------------------------------------------- 지도 */
+
+.mapwrap { position: relative; }
+.map {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: min(82vh, 900px);
+  touch-action: none;
+  cursor: grab;
+  border-radius: var(--r);
+  background: var(--map-bg);
+  overflow: hidden;
+}
+.map:active { cursor: grabbing; }
+
+/* 읍면동 — 기본은 **경계선만** 보여준다.
+   전부 칠해 두면 색이 서른 개나 깔려 지도가 시끄럽고, 정작 봐야 할 사고지점과
+   도로가 묻힌다. 색은 '고른 곳'을 알리는 데만 쓴다 — 누른 면 하나만 칠해진다. */
+/* 확대 보정 두 가지. JS 가 배율(k)에 맞춰 넣는다.
+     --zw  굵기 계수 (k^0.22, 최대 1.5)
+     --zo  진하기 계수 (1 → 0.42)
+   확대할수록 선은 거의 그대로 두고 색을 뺀다. 좁은 구역을 크게 볼 때 주인공은
+   그 안의 사고지점과 배경지도이지, 도로망 자체가 아니기 때문이다. */
+.map { --zw: 1; --zo: 1; }
+
+/* **vector-effect 는 상속되지 않는다.** 그룹(<g>)에 걸어 두면 아무 일도
+   일어나지 않아 선이 배율만큼 그대로 굵어진다(16배 확대에서 간선도로가
+   동네를 덮었다). 반드시 그리는 요소마다 걸어야 한다. */
+.map .ad path,
+.map .cityline,
+.map .rd .ln,
+.map .rd .hit { vector-effect: non-scaling-stroke; }
+
+.map .ad path {
+  fill: var(--map-land);
+  stroke: hsla(var(--h), var(--ad-line-s), var(--ad-line-l), var(--ad-line-a));
+  stroke-width: calc(var(--aw, 1.1) * var(--zw));
+  transition: fill .14s ease, stroke .14s ease;
+}
+/* 경계선도 확대하면 조금 뺀다. 다만 도로만큼은 아니다 —
+   크게 볼수록 '지금 어느 동인지'는 오히려 더 알고 싶어진다. */
+.map .dongs { opacity: calc(0.58 + var(--zo) * 0.42); }
+.map .ad { cursor: pointer; }
+.map .ad:focus { outline: none; }
+.map .ad:hover path, .map .ad:focus path {
+  fill: hsla(var(--h), var(--ad-fill-s), var(--ad-fill-l), .5);
+  stroke: hsl(var(--h), var(--ad-line-s), var(--ad-line-l));
+  stroke-width: calc(var(--aw, 1.1) * var(--zw) * 1.7);
+}
+.map .ad.on path {
+  fill: hsla(var(--h), var(--ad-fill-s), var(--ad-fill-l), .95);
+  stroke: hsl(var(--h), var(--ad-line-s), var(--ad-line-l));
+  stroke-width: calc(var(--aw, 1.1) * var(--zw) * 2.3);
+}
+/* 읍·면·동은 색이 아니라 선 모양으로 가른다(기본 상태에서 색이 없으므로
+   이게 유일한 구분이고, 색약에도 안전하다). */
+.map .ad-dong path { stroke-dasharray: 5 2.5; }
+/* '읍면동 채색' 칩을 켜면 전부 칠한다. 이웃 구분이 필요할 때만. 기본은 꺼짐. */
+.map.show-ad .ad path {
+  fill: hsla(var(--h), var(--ad-fill-s), var(--ad-fill-l), var(--ad-fill-a));
+}
+
+.map .cityline {
+  stroke: var(--map-city);
+  stroke-width: calc(var(--cw, 1.6) * var(--zw));
+}
+.map .dongname { fill: var(--map-label); }
+.map .rdlabel { fill: var(--road-label); }
+.map .legend { fill: var(--fg-2); }
+.map .legend .lg-h { fill: var(--muted); font-size: 10.5px; font-weight: 700;
+  letter-spacing: .04em; }
+.map .legend .lg-rd { fill: var(--muted); }
+.map .legend .lg-expressway { fill: var(--road-expressway); }
+.map .legend .lg-brt { fill: var(--road-brt); }
+.map .legend .lg-arterial { fill: var(--road-arterial); }
+.map .legend .lg-sub { fill: var(--road-sub); }
+.map .legend .lg-collector { fill: var(--road-collector); }
+/* 범례의 면 조각은 색이 아니라 선 모양을 보여주는 자리다.
+   실제 면 색은 이웃 구분용이라 뜻이 없으므로 여기서는 중립색으로 둔다. */
+.map .legend .lg-ad { stroke-width: 1.4; fill: var(--panel-3); stroke: var(--map-city); }
+.map .legend .lg-dong { stroke-dasharray: 4 2; }
+.map .legend .lg-note { fill: var(--muted); font-size: 10px; }
+.map .legend .lg-bg, .map .scalebar .sb-bg {
+  fill: var(--panel); fill-opacity: .9; stroke: var(--line); stroke-width: 1;
+}
+.map .scalebar { fill: var(--fg-2); }
+.map .scalebar .sb-bar, .map .scalebar .sb-tick { fill: var(--fg-2); }
+.map .scalebar .sb-label { fill: var(--fg-2); font-weight: 600; }
+.map .footnote { fill: var(--muted); }
+
+/* 배경지도 — 칩을 켜야 타일을 받아온다(기본은 바깥 요청 없음).
+   채도를 낮추고 흐리게 깔아 그 위의 사고지점·도로가 묻히지 않게 한다. */
+.map .basemap { display: none; }
+.map .basemap image { image-rendering: auto; }
+.map.has-base .basemap { display: block; opacity: .78; filter: saturate(.55); }
+[data-theme="dark"] .map.has-base .basemap {
+  /* 밝은 타일을 어둡게 뒤집는다. 다크 화면에서 흰 지도는 눈을 때린다. */
+  opacity: .62; filter: invert(1) hue-rotate(180deg) saturate(.45) brightness(.92);
+}
+/* 배경지도를 깔면 읍면동 면은 비운다 — 안 그러면 지도를 덮는다.
+   대신 경계선은 진하게 올린다. 바탕이 복잡해져 옅은 선은 묻힌다.
+   고른 면과 커서가 올라간 면의 색은 그대로 둔다(그게 색의 유일한 쓸모다). */
+.map.has-base .ad path {
+  fill: none;
+  stroke: hsl(var(--h), var(--ad-line-s), calc(var(--ad-line-l) - 10%));
+  stroke-width: calc(var(--aw, 1.1) * var(--zw) * 1.35);
+}
+.map.has-base .cityline { stroke-width: calc(var(--cw, 1.6) * var(--zw) * 1.3); }
+.map.has-base .ad:hover path, .map.has-base .ad:focus path {
+  fill: hsla(var(--h), var(--ad-fill-s), var(--ad-fill-l), .42);
+}
+.map.has-base .ad.on path {
+  fill: hsla(var(--h), var(--ad-fill-s), var(--ad-fill-l), .62);
+}
+.map .basemap-credit { fill: var(--muted); display: none; }
+.map.has-base .basemap-credit { display: block; }
+
+/* 도로 — 히트영역은 굵고 투명하게 두어 얇은 지선도 커서에 잡힌다.
+   확대할수록 도로망 전체를 옅게 뺀다(--zo). 그 자리에서 봐야 하는 것은
+   배경지도의 실제 길과 사고지점이지 우리가 덧그린 선이 아니다. */
+.map .roads { opacity: var(--zo); }
+.map .rd .hit {
+  fill: none; stroke: transparent; stroke-width: var(--hit);
+  stroke-linecap: round; pointer-events: stroke;
+}
+.map .rd .ln {
+  fill: none; stroke-width: calc(var(--w) * var(--zw));
+  stroke-linecap: round; stroke-linejoin: round;
+  pointer-events: none;
+  transition: stroke .14s ease;
+}
+/* 집산·지선은 투명 히트영역을 따로 두지 않는다(수가 많아 파일이 배로 커진다).
+   대신 선 자체를 포인터 대상으로 삼는다 — 얇지만 잡히기는 한다. */
+.map .rd-thin .ln { pointer-events: stroke; }
+.map .rd[data-cls="expressway"] .ln { stroke: var(--road-expressway); }
+.map .rd[data-cls="brt"] .ln { stroke: var(--road-brt); }
+.map .rd[data-cls="arterial"] .ln { stroke: var(--road-arterial); }
+.map .rd[data-cls="sub"] .ln { stroke: var(--road-sub); }
+.map .rd[data-cls="collector"] .ln { stroke: var(--road-collector); }
+.map .rd:hover .ln {
+  stroke-width: calc(var(--wh) * var(--zw)); stroke: var(--road-hover);
+}
+.map .rd .rdname {
+  fill: var(--road-label); font-size: 15px; font-weight: 700;
+  opacity: 0; pointer-events: none;
+  paint-order: stroke; stroke: var(--map-halo); stroke-width: 3.5px;
+  stroke-linejoin: round;
+  transition: opacity .14s ease;
+}
+.map .rd:hover .rdname { opacity: 1; }
+/* 지도 위 '도로' 칩이 등급별로 켜고 끈다 */
+.map.hide-collector .rd[data-cls="collector"],
+.map.hide-sub .rd[data-cls="sub"],
+.map.hide-arterial .rd[data-cls="arterial"],
+.map.hide-brt .rd[data-cls="brt"],
+.map.hide-expressway .rd[data-cls="expressway"] { display: none; }
+.map.hide-roads .roads { display: none; }
+
+.map .rdlabel text, .map .dongname text {
+  paint-order: stroke; stroke: var(--map-halo); stroke-width: 3.2px;
+  stroke-linejoin: round;
+}
+/* 작은 신도시 동은 이름이 서로 겹친다. 확대했을 때만 띄운다.
+   단, 고른 면의 이름은 배율과 상관없이 보여야 한다 — 무엇을 골랐는지 알아야 하므로. */
+.map .dongname .small { opacity: 0; transition: opacity .14s ease; }
+.map.zoomed-in .dongname .small { opacity: 1; }
+.map .dongname text.on { opacity: 1; fill: var(--fg); font-weight: 800; }
+.map.hide-dongname .dongname { display: none; }
+
+.map .mk { cursor: pointer; }
+.map .mk :is(polygon, rect, circle):not(.halo) { stroke: var(--map-halo); }
+.map .mk:focus { outline: none; }
+.map .mk:hover .halo, .map .mk:focus .halo { opacity: .22; }
+.map .mk.sel .halo { opacity: .3; }
+.map .mk .mkname {
+  fill: var(--fg); font-size: 15px; font-weight: 700;
+  opacity: 0; pointer-events: none;
+  paint-order: stroke; stroke: var(--map-halo); stroke-width: 3.5px;
+  stroke-linejoin: round;
+  transition: opacity .14s ease;
+}
+.map .mk:hover .mkname, .map .mk:focus .mkname, .map .mk.sel .mkname { opacity: 1; }
+
+.maptools {
+  display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center;
+  margin: 0 0 11px; padding-bottom: 10px; border-bottom: 1px solid var(--line-2);
+}
+.zoombtns { display: flex; gap: 4px; }
+.zoombtns button {
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--fg-2);
+  border-radius: var(--r-sm); padding: 4px 10px; font: inherit; font-size: 12px;
+  cursor: pointer; min-width: 30px; line-height: 1.5;
+  transition: border-color .14s, color .14s, background .14s;
+}
+.zoombtns button:hover {
+  border-color: var(--accent); color: var(--accent); background: var(--accent-soft);
+}
+.fts { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.ft-label { color: var(--muted); font-size: 11px; margin-right: 2px; }
+.ft {
+  background: transparent; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 999px; padding: 3px 11px; font: inherit; font-size: 11.5px;
+  cursor: pointer; transition: all .14s ease;
+}
+.ft:hover { border-color: var(--c); color: var(--c); }
+.ft.on {
+  background: color-mix(in srgb, var(--c) 18%, transparent);
+  border-color: var(--c); color: var(--c); font-weight: 700;
+}
+.ft-empty { color: var(--muted); font-size: 11.5px; }
+.ft-empty code {
+  background: var(--panel-2); padding: 1px 6px; border-radius: 5px;
+  font-family: var(--mono); font-size: 11px;
+}
+
+/* --------------------------------------------------------------- 상세 */
+
+.detail .dt-name { font-size: 15.5px; font-weight: 700; letter-spacing: -0.02em; }
+.detail .dt-sub { color: var(--muted); font-size: 11.5px; margin: 2px 0 12px; }
+.detail .dt-big {
+  font-size: clamp(27px, 3vw, 33px);
+  font-weight: 800; line-height: 1.05; letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.detail .dt-unit { font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.detail dl {
+  display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+  margin: 13px 0 0; font-size: 12px;
+}
+.detail dt { color: var(--muted); }
+.detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.detail .sect { margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--line-2); }
+.detail .sect h4 {
+  margin: 0 0 8px; font-size: 10.5px; color: var(--muted);
+  letter-spacing: .06em; font-weight: 700; text-transform: uppercase;
+}
+.tag {
+  font-size: 10.5px; padding: 2px 8px; border-radius: 999px; font-weight: 700;
+}
+.delta.up { color: var(--st-warning); }
+.delta.down { color: var(--accent); }
+
+.qgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.qgrid .q {
+  background: var(--panel-2); border-radius: var(--r-sm); padding: 8px 10px;
+  border: 1px solid var(--line-2);
+}
+.qgrid .q .l { color: var(--muted); font-size: 10.5px; }
+.qgrid .q .v {
+  font-size: 15.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.spark, .gauge { width: 100%; max-width: 300px; height: auto; }
+
+/* 축·눈금이 있는 선그래프 */
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .axis { stroke: var(--line); stroke-width: 1; }
+.chart .grid { stroke: var(--line-2); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .tick { fill: var(--muted); font-size: 9px; font-variant-numeric: tabular-nums; }
+.chart .axis-title { fill: var(--muted); font-size: 9.5px; font-weight: 600; }
+.chart .hit { fill: transparent; cursor: crosshair; }
+.chart .markline { stroke-width: 1; stroke-dasharray: 5 3; opacity: .85; }
+.chart .marklabel { font-size: 8.5px; font-weight: 700; text-anchor: end;
+  paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
+.chart .rainbars rect { fill: var(--accent-2); opacity: .45; }
+.chart .headroom { fill: var(--muted); font-size: 9px; font-weight: 600;
+  paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
+.chart .cursor { transition: opacity .1s ease; pointer-events: none; }
+.chart .cursor line { stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+.chart .readout {
+  fill: var(--fg); font-size: 10.5px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke; stroke: var(--panel); stroke-width: 3.5px; stroke-linejoin: round;
+}
+.gauge-none { color: var(--muted); font-size: 11px; }
+.bars { width: 100%; height: auto; }
+
+/* --------------------------------------------------------------- 오염원 구성 */
+
+.polblock + .polblock { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line-2); }
+.pol-head { display: flex; align-items: baseline; gap: 8px; }
+.pol-label { font-size: 12.5px; font-weight: 700; }
+.pol-year { color: var(--muted); font-size: 11px; }
+.pol-total {
+  font-size: 24px; font-weight: 800; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums; margin: 2px 0 9px;
+}
+.sharebar { width: 100%; height: 14px; display: block; border-radius: 4px; overflow: hidden; }
+.shlist { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 2px 14px; margin-top: 9px; }
+.sh { display: flex; align-items: center; gap: 6px; font-size: 11.5px; }
+.sh .dot { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.sh .nm { color: var(--fg-2); }
+.sh .pc { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; }
+.sh .vv { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 62px; text-align: right; }
+
+/* --------------------------------------------------------------- 표 */
+
+.tablewrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+table.wq { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 560px; }
+table.wq th, table.wq td {
+  padding: 8px 9px; text-align: right;
+  border-bottom: 1px solid var(--line-2);
+  font-variant-numeric: tabular-nums;
+}
+table.wq thead th {
+  color: var(--muted); font-weight: 600; font-size: 10.5px;
+  white-space: nowrap; text-transform: uppercase; letter-spacing: .04em;
+  border-bottom: 1px solid var(--line);
+}
+table.wq th:first-child, table.wq td:first-child { text-align: left; }
+table.wq tbody tr { transition: background .14s ease; }
+table.wq tbody tr:hover { background: var(--panel-2); }
+table.wq td.g { font-weight: 700; }
+
+/* --------------------------------------------------------------- 기상 */
+
+.wx { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 14px; }
+.wx .item { min-width: 76px; }
+.wx .item .l { color: var(--muted); font-size: 11px; }
+.wx .item .v {
+  font-size: 20px; font-weight: 700; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------- 알림·오류 */
+
+.alerts {
+  background: color-mix(in srgb, var(--st-alert) 9%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--st-alert) 28%, transparent);
+  border-radius: var(--r); padding: 12px 15px; margin-bottom: 16px;
+}
+.alerts h3 { margin: 0 0 6px; font-size: 12.5px; color: var(--st-alert); }
+.alerts li, .alerts > div { font-size: 12px; color: var(--fg-2); }
+.alerts code {
+  font-family: var(--mono); font-size: 11.5px;
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  padding: 1px 6px; border-radius: 5px;
+}
+.alerts.warn {
+  background: color-mix(in srgb, var(--st-warning) 9%, var(--panel));
+  border-color: color-mix(in srgb, var(--st-warning) 30%, transparent);
+}
+.alerts.warn h3 { color: var(--st-warning); }
+/* 샘플 데이터 고지처럼 반드시 읽혀야 하는 문구. 목록 항목보다 한 급 크게. */
+.alerts .notice {
+  font-size: 14px; font-weight: 700; color: var(--fg); line-height: 1.5;
+}
+.alerts.warn .notice { color: var(--st-warning); }
+.alerts .sub { font-size: 12px; color: var(--fg-2); margin-top: 5px; }
+@media (max-width: 560px) { .alerts .notice { font-size: 13px; } }
+.errs {
+  color: var(--muted); font-size: 11.5px; margin-top: 14px; padding-top: 11px;
+  border-top: 1px dashed var(--line);
+}
+.errs li { margin: 3px 0; }
+.empty { color: var(--muted); font-size: 12px; padding: 14px 0; }
+
+/* --------------------------------------------------------------- 푸터 */
+
+footer {
+  margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: 11.5px; line-height: 1.75;
+}
+.contact {
+  margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--line-2);
+  color: var(--fg-2); font-size: 12px;
+}
+.contact > div + div { margin-top: 3px; }
+.contact .k {
+  display: inline-block; min-width: 30px; color: var(--muted);
+  font-size: 10.5px; letter-spacing: .05em; margin-right: 7px;
+}
+.contact .made { font-weight: 600; }
+/* 참여자 줄은 기관명 아래에 들여쓴다 — 라벨 폭(30px)과 여백(7px)만큼 */
+.contact .members { padding-left: 37px; color: var(--muted); font-size: 11.5px; }
+.contact a { text-decoration: none; }
+.contact a:hover { text-decoration: underline; }
+
+.visitors {
+  display: flex; gap: 8px; align-items: baseline; justify-content: flex-end;
+  margin-top: 10px; color: var(--muted); font-size: 11.5px;
+}
+.visitors .vk { color: var(--fg-2); font-weight: 700; margin-right: 4px; }
+.visitors .hitsbadge { height: 20px; vertical-align: middle; border-radius: 3px; }
+.visitors .vsub { color: var(--muted); font-size: 11px; }
+.visitors b {
+  color: var(--fg); font-variant-numeric: tabular-nums;
+  font-size: 13.5px; font-weight: 700;
+}
+
+/* --------------------------------------------------------------- 등장 */
+
+@media (prefers-reduced-motion: no-preference) {
+  .kpi, .panel, .freshbar { animation: rise .45s cubic-bezier(.2,.7,.3,1) backwards; }
+  .kpi:nth-child(2) { animation-delay: .04s }
+  .kpi:nth-child(3) { animation-delay: .08s }
+  .kpi:nth-child(4) { animation-delay: .12s }
+  .kpi:nth-child(5) { animation-delay: .16s }
+  .freshbar { animation-delay: .18s }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px) } }
+}
+
+/* --------------------------------------------------------------- 반응형 */
+
+@media (max-width: 1240px) {
+  .explorer { grid-template-columns: 236px minmax(0, 1fr); }
+  .explorer .detail { grid-column: 1 / -1; }
+}
+@media (max-width: 900px) {
+  .wrap { padding: 18px 14px 48px; }
+  .explorer { grid-template-columns: 1fr; }
+  .side { max-height: 320px; }
+  .grid { grid-template-columns: 1fr; }
+  .map { max-height: 70vh; }
+  .fresh-note { margin-left: 0; width: 100%; }
+}
+@media (max-width: 560px) {
+  body { font-size: 13.5px; }
+  .kpis { grid-template-columns: repeat(2, 1fr); gap: 9px; }
+  .kpi { padding: 12px 13px; }
+  .kpi .v { font-size: 21px; }
+  header.top { gap: 8px; }
+  .panel { padding: 14px 14px 16px; border-radius: var(--r); }
+  .maptools { gap: 8px; }
+  .visitors { justify-content: flex-start; }
+  .qgrid { grid-template-columns: 1fr; }
+}
+
+@media print {
+  body { background: #fff; }
+  .theme-toggle, .maptools, .visitors { display: none; }
+  .panel, .kpi, .freshbar { box-shadow: none; break-inside: avoid; }
+}
+
+
+/* =============================================================== 교통 전용 */
+
+/* 지도 마커 — 종류별로 켜고 끈다 */
+.map.hide-spot .mk[data-kind="spot"],
+.map.hide-death .mk[data-kind="death"],
+.map.hide-camera .mk[data-kind="camera"],
+.map.hide-zone .mk[data-kind="zone"],
+.map.hide-event .mk[data-kind="event"],
+.map.hide-cctv .mk[data-kind="cctv"] { display: none; }
+
+/* 지도 위 토글 칩 묶음 */
+.mtgroup { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.mt-label { color: var(--muted); font-size: 11px; margin-right: 2px; }
+
+/* 위험도 배지 */
+.riskbadge {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--c); color: var(--c);
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  border-radius: 999px; padding: 3px 12px; font-size: 12.5px; font-weight: 700;
+}
+.riskbadge::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c);
+}
+.risk-why { margin: 11px 0 0; padding-left: 18px; color: var(--fg-2); font-size: 12.5px; }
+.risk-why li { margin: 2px 0; }
+
+/* 소통 속도 막대 */
+.flowrow {
+  display: grid; grid-template-columns: minmax(90px, 1fr) 1fr 56px;
+  gap: 10px; align-items: center; padding: 5px 0;
+  border-bottom: 1px solid var(--line-2); font-size: 12.5px;
+}
+.flowrow:last-child { border-bottom: none; }
+.flowrow .rn { color: var(--fg-2); overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; }
+.flowbar { height: 8px; border-radius: 4px; background: var(--panel-3); overflow: hidden; }
+.flowbar > i { display: block; height: 100%; border-radius: 4px; background: var(--c); }
+.flowrow .sv { text-align: right; font-weight: 700; color: var(--c); }
+
+/* 돌발상황 목록 */
+.evlist { list-style: none; margin: 0; padding: 0; }
+.evlist li {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px;
+  align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line-2);
+}
+.evlist li:last-child { border-bottom: none; }
+.evkind {
+  border: 1px solid var(--c); color: var(--c); border-radius: 999px;
+  padding: 1px 9px; font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.evlist .evmsg { color: var(--fg-2); }
+.evlist .evtime { color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.evlist .evsub { grid-column: 2 / -1; color: var(--muted); font-size: 11.5px; }
+
+/* 취약계층·미스매치 표 */
+table.tt { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 520px; }
+table.tt th, table.tt td {
+  padding: 7px 9px; border-bottom: 1px solid var(--line-2); text-align: right;
+  white-space: nowrap;
+}
+table.tt thead th {
+  color: var(--muted); font-weight: 600; font-size: 11.5px;
+  border-bottom: 1px solid var(--line); position: sticky; top: 0;
+  background: var(--panel);
+}
+table.tt th:first-child, table.tt td:first-child { text-align: left; white-space: normal; }
+table.tt tbody tr { transition: background .14s ease; }
+table.tt tbody tr:hover { background: var(--panel-2); }
+/* 지도의 면과 짝지어 켜지는 행 */
+table.tt tbody tr[data-dong] { cursor: pointer; }
+table.tt tbody tr.on {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+table.tt td.num { font-variant-numeric: tabular-nums; }
+table.tt td.warn { color: var(--st-warning); font-weight: 700; }
+table.tt td.bad { color: var(--st-alert); font-weight: 700; }
+.scrollx { overflow-x: auto; scrollbar-width: thin; }
+
+/* 읍면동 칸 앞의 색 점 — 지도의 면 색과 같은 색상환을 쓴다 */
+.adchip {
+  display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+  margin-right: 7px; vertical-align: -1px;
+  background: hsla(var(--h), var(--ad-fill-s), var(--ad-fill-l), 1);
+  border: 1.4px solid hsl(var(--h), var(--ad-line-s), var(--ad-line-l));
+}
+.adkind { color: var(--muted); font-size: 11px; margin-left: 5px; }
+
+/* 신선도 — 층(실시간/연단위/정적)을 눈으로 갈라 둔다 */
+.freshbar .tier {
+  color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+  align-self: center; padding-right: 2px;
+}
+.freshbar .tier + .fr { margin-left: 0; }
+.fr.stale .t { color: var(--st-warning); }
+.fr.dead .t { color: var(--st-alert); }
+
+/* 목록 항목의 종류 점 */
+.pick .dot.star { border-radius: 2px; transform: rotate(45deg); }
+.pick .vv.small { font-size: 11px; }
+
+/* 상세 패널 */
+.dhead { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap;
+  margin-bottom: 3px; }
+.dhead .dn { font-size: 15.5px; font-weight: 700; }
+.dhead .dtag {
+  border: 1px solid var(--c); color: var(--c); border-radius: 999px;
+  padding: 1px 9px; font-size: 11px; font-weight: 700;
+}
+.dsub { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+.dgrid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+  gap: 8px; margin: 12px 0 4px;
+}
+.dcell {
+  background: var(--panel-2); border: 1px solid var(--line-2);
+  border-radius: var(--r-sm); padding: 8px 10px;
+}
+.dcell .k { color: var(--muted); font-size: 11px; }
+.dcell .v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dnote { color: var(--muted); font-size: 11.5px; margin-top: 11px; line-height: 1.5; }

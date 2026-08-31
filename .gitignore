@@ -1,0 +1,9 @@
+config.json
+data/latest.json
+data/*.log
+dashboard.html
+site/
+.ghpages/
+__pycache__/
+*.pyc
+.DS_Store

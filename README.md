@@ -252,14 +252,56 @@ BRT 는 이름으로 고릅니다. 세종 BRT 는 별도 도로가 아니라 간
 
 ## 배포
 
-수집이 국내 IP 를 요구하므로 **수집은 PC(또는 사내 NAS), 공개는 정적 서빙**으로
-나눕니다.
+수집이 국내 IP 를 요구하므로 **수집은 국내 기계, 공개는 정적 서빙**으로 나눕니다.
+공개 주소는 **https://ysong86.github.io/traffic_sejong/** 입니다.
+
+### 시놀로지 NAS 에서 (권장)
+
+PC 는 절전에 들어가면 멈춥니다. 24시간 켜져 있는 NAS 가 이 자리에 맞습니다.
+NAS 에는 git 이 없을 수 있어, **git 대신 GitHub Contents API 로 파일 하나만
+PUT** 합니다(`tools/publish_nas.py`). 표준 라이브러리만 씁니다.
+
+```bash
+# 1) NAS 에 소스를 둔다 (저장소가 공개라 클론이 가장 간단)
+git clone https://github.com/ysong86/traffic_sejong.git
+
+# 2) 동작 확인 — 올리지 않고 만들기만 한다
+python3 tools/publish_nas.py --dry-run
+
+# 3) 실제 배포
+python3 tools/publish_nas.py
+```
+
+**토큰** — [github.com/settings/tokens?type=beta](https://github.com/settings/tokens?type=beta)
+에서 `traffic_sejong` **하나에만** `Contents = Read and write`. 다른 권한은 주지
+마십시오. 이 토큰이 하는 일은 파일 하나 덮어쓰기가 전부입니다.
+
+**config.json** — 저장소에는 없습니다(키가 들어가므로 gitignore). NAS 에서
+`config.example.json` 을 복사해 API 키를 채우고 `deploy.token` 을 넣거나,
+환경변수 `GITHUB_TOKEN` 으로 주십시오.
+
+**DSM 작업 스케줄러** — 제어판 → 작업 스케줄러 → 생성 → 예약 작업 →
+사용자 정의 스크립트. 일정은 매일·10분 간격 반복, 사용자는 본인 계정(root 불필요).
+
+```bash
+cd /volume1/<경로>/traffic_sejong && python3 tools/publish_nas.py
+```
+
+인증키가 아직 없으면 **자동으로 샘플을 올립니다.** `config.json` 에 키를 넣는
+순간 다음 주기부터 저절로 실측으로 바뀝니다 — 스케줄러를 다시 손댈 필요가 없습니다.
+
+### 윈도우 PC 에서
 
 ```
 tools\publish.ps1           수집 → site\index.html → gh-pages 로 force push
+tools\publish.ps1 -Demo     인증키가 있어도 샘플로 (화면 점검용)
 tools\install_startup.ps1   관리자 권한 없이 10분마다 실행 (시작프로그램)
 tools\install_startup.ps1 -Remove   해제
 ```
+
+PC 쪽과 NAS 쪽을 **동시에 돌리지 마십시오.** 같은 파일을 번갈아 덮어써서 갱신
+시각이 오락가락합니다. NAS 로 옮겼다면 PC 쪽은 `data\PAUSED` 파일을 만들어
+멈추거나 시작프로그램에서 제거하십시오.
 
 `gh-pages` 는 **커밋 하나만** 두고 amend 로 덮어씁니다. 파일 하나가 660KB 라
 매번 새 커밋을 쌓으면 저장소가 금방 기가 단위로 불어납니다.
@@ -322,8 +364,9 @@ assets/
 tools/
   make_admin.py        Overpass → 읍면동 경계 자산
   make_roads.py        Overpass → 도로망 자산
-  publish.ps1          수집 → 생성 → gh-pages
-  install_startup.ps1  10분 자동 실행
+  publish.ps1          (윈도우) 수집 → 생성 → gh-pages 로 push
+  install_startup.ps1  (윈도우) 10분 자동 실행
+  publish_nas.py       (시놀로지·리눅스) git 없이 GitHub API 로 배포
   counter-worker.js    (선택) 순방문자 집계용 Cloudflare Worker
 ```
 

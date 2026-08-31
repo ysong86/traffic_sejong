@@ -121,9 +121,9 @@
     "_엔드포인트": "true 로 두면 화면 하단에 사용한 API 주소를 표시합니다(문제 추적용). 공개 화면에서는 꺼둡니다."
   },
   "deploy": {
-    "_안내": "git 없이 GitHub Contents API 로 올릴 때 씁니다.",
-    "_토큰": "https://github.com/settings/tokens?type=beta 에서 해당 저장소에 Contents=Read and write 권한만. 환경변수 GITHUB_TOKEN 으로 줘도 됩니다.",
-    "repo": "",
+    "_안내": "시놀로지 NAS 등에서 git 없이 GitHub Contents API 로 올릴 때 씁니다. tools/publish_nas.py 참고. PC 에서 tools/publish.ps1 로 돌릴 때는 이 항목이 필요 없습니다.",
+    "_토큰": "https://github.com/settings/tokens?type=beta 에서 traffic_sejong 저장소 하나에만 Contents=Read and write 권한. 다른 권한은 주지 마십시오. 환경변수 GITHUB_TOKEN 으로 줘도 됩니다.",
+    "repo": "ysong86/traffic_sejong",
     "branch": "gh-pages",
     "path": "index.html",
     "token": ""

@@ -215,10 +215,13 @@ def main(argv=None) -> int:
     try:
         try:
             short = publish_flat(repo, branch, token, files, message)
-        except urllib.error.HTTPError as exc:
-            # 단일 커밋 경로가 막히면(권한·API 변경 등) 예전 방식으로 물러선다.
-            # 이력이 쌓이더라도 화면이 멈추는 것보다는 낫다.
-            print("단일 커밋 실패(HTTP %s) — Contents API 로 물러섭니다." % exc.code)
+        except (urllib.error.HTTPError, KeyError, ValueError, TypeError) as exc:
+            # 단일 커밋 경로가 막히면(권한·API 응답 변경 등) 예전 방식으로 물러선다.
+            # 이력이 쌓이더라도 화면이 멈추는 것보다는 낫다. 연결 자체가 끊긴
+            # 경우(URLError)는 물러서 봐야 똑같이 실패하므로 바깥에서 받는다.
+            print("단일 커밋 실패(%s) — Contents API 로 물러섭니다."
+                  % (("HTTP %s" % exc.code) if isinstance(exc, urllib.error.HTTPError)
+                     else repr(exc)))
             if current_sha(repo, ".nojekyll", branch, token) is None:
                 upload(repo, ".nojekyll", branch, token, b"", "Jekyll 처리 끄기")
             short = upload(repo, path, branch, token, html, message)

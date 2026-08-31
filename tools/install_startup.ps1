@@ -1,4 +1,4 @@
-# 자동 갱신 — 관리자 권한 없이 (시작프로그램 방식)
+﻿# 자동 갱신 — 관리자 권한 없이 (시작프로그램 방식)
 #
 #   powershell -ExecutionPolicy Bypass -File tools\install_startup.ps1
 #   해제:  powershell -ExecutionPolicy Bypass -File tools\install_startup.ps1 -Remove

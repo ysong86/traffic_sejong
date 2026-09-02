@@ -261,6 +261,14 @@ header.top .sub {
   border: 1px solid color-mix(in srgb, var(--st-normal) 30%, transparent);
 }
 .badge.live::before { animation: pulse 2.4s ease-in-out infinite; }
+/* 일부만 붙은 상태 — 실측이긴 하나 아직 다 오지 않았다.
+   초록(다 됨)과 주황(가짜)의 중간이라는 뜻으로 파랑을 쓴다. */
+.badge.part {
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+}
+.badge.part::before { animation: pulse 2.4s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
 
 /* 테마 토글 */

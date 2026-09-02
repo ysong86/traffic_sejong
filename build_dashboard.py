@@ -1561,6 +1561,28 @@ def render_counter(site: dict) -> str:
             % (json.dumps(payload), esc(label), COUNTER_JS))
 
 
+SOURCE_LABELS = [
+    ("koroad", "사고통계"), ("its", "실시간 소통"),
+    ("facility", "안전시설"), ("kma", "기상"),
+]
+
+
+def source_status(data: dict) -> list:
+    """소스별 연결 여부. (이름, 붙었나) 목록.
+
+    '붙었다'는 실제로 값이 들어왔다는 뜻이다. 인증키만 있고 응답이 없으면
+    붙은 것으로 치지 않는다 — 화면에 보여줄 게 없는 건 마찬가지이기 때문이다.
+    ITS 는 조용한 시각에 돌발이 0건일 수 있으므로 수집이 돌았는지(summary)로 본다.
+    """
+    got = {
+        "koroad": bool((data.get("koroad") or {}).get("spots")),
+        "its": bool((data.get("its") or {}).get("summary")),
+        "facility": bool((data.get("facility") or {}).get("items")),
+        "kma": bool((data.get("kma") or {}).get("now")),
+    }
+    return [(label, got.get(key, False)) for key, label in SOURCE_LABELS]
+
+
 def has_any_data(data: dict) -> bool:
     """어느 소스든 실제 값이 하나라도 들어왔는가."""
     return bool(((data.get("koroad") or {}).get("spots") or [])
@@ -1666,13 +1688,25 @@ def render(data: dict) -> str:
         % (k["color"], esc(k["label"]), esc(k["value"]), esc(k["sub"]))
         for k in summarize(data))
 
+    # 배지는 '지금 이 화면을 얼마나 믿어도 되는가'를 한마디로 말한다.
+    # 넷 중 몇이 붙었는지까지 보여주면 연동이 진행 중이라는 것도 함께 전해진다.
+    status = source_status(data)
+    live = sum(1 for _, ok in status if ok)
+    total = len(status)
+    tip = " · ".join("%s %s" % (name, "O" if ok else "X") for name, ok in status)
+
     if demo:
-        banner = '<span class="badge demo">샘플 데이터</span>'
-    elif has_any_data(data):
-        banner = '<span class="badge live">실측 연동</span>'
+        # 숫자가 실제 관측이 아닌 상태다. 여기서 말을 부드럽게 하면 거짓말이 된다.
+        banner = ('<span class="badge demo" title="%s">샘플 데이터 · 연동 준비 중</span>'
+                  % esc(tip))
+    elif live == total:
+        banner = '<span class="badge live" title="%s">실측 연동</span>' % esc(tip)
+    elif live:
+        banner = ('<span class="badge part" title="%s">일부 연동 · %d/%d</span>'
+                  % (esc(tip), live, total))
     else:
         # 키가 없거나 전 소스가 실패한 상태. "실측 연동"이라고 쓰면 거짓말이 된다.
-        banner = '<span class="badge demo">자료 없음</span>'
+        banner = '<span class="badge demo" title="%s">자료 없음</span>' % esc(tip)
 
     # 샘플로 공개할 때 가장 먼저 읽혀야 하는 문구. 화면 맨 위, 굵게.
     # site.notice 로 문구를 바꿀 수 있다(실측 연동이 끝나면 배너 자체가 사라진다).

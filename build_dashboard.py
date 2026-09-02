@@ -1023,6 +1023,9 @@ def render_flow(data: dict) -> str:
         return ('<p class="note">소통정보가 없습니다. ITS 인증키가 없거나, '
                 '세종시 관리도로가 ITS 표준링크에 포함되지 않았을 수 있습니다.</p>')
 
+    # 간선급 추리기는 수집기가 이미 했다(collectors/its.py). 여기서는 밝히기만 한다.
+    narrowed = bool(its.get("flow_major_only"))
+
     top = max((r["speed"] for r in flow), default=1) or 1
     rows = "".join(
         '<div class="flowrow" style="--c:%s"><span class="rn" title="%s">%s</span>'
@@ -1034,14 +1037,24 @@ def render_flow(data: dict) -> str:
         for row in flow[:16])
 
     summary = its.get("summary") or {}
-    head = ('<p class="note">링크 %s개 · 평균 %s · 지체·정체 %s개 구간</p>'
+    head = ('<p class="note">링크 %s개 · 평균 %s · 지체·정체 %s개 구간%s</p>'
             % (fmt(summary.get("links")), fmt(summary.get("avg_speed"), 1, " km/h"),
-               fmt(summary.get("jam"))))
+               fmt(summary.get("jam")),
+               " · 아래 목록은 <b>간선급 도로</b>만" if narrowed else ""))
     legend = " · ".join("%s %s" % (FLOW_LABEL[k], v) for k, v in
                         [("smooth", "50↑"), ("slow", "30~50"),
                          ("delay", "15~30"), ("jam", "15↓")])
+    # ITS 소통정보는 링크 좌표를 주지 않는다. 그래서 돌발상황처럼 시 경계
+    # 다각형으로 거를 수가 없고, 사각형 범위로 부른 결과를 그대로 쓴다.
+    # 세종 남쪽은 대전과 톱니처럼 맞물려 있어 인접 도로가 섞인다 — 밝혀 둔다.
     return ('%s%s<p class="note" style="margin-top:11px">등급 기준(km/h) — %s. '
-            '도로 등급을 구분하지 않은 보수적 기준입니다.</p>'
+            '도로 등급을 구분하지 않은 보수적 기준입니다.<br>'
+            '표준링크는 신호 하나 사이의 짧은 구간이라 <b>도심 구간은 원래 낮게 '
+            '나옵니다</b> — 낮은 값이 곧 사고·정체를 뜻하지는 않습니다. '
+            '속도·통행시간이 모두 0인 링크(자료 없음)는 제외했습니다.<br>'
+            'ITS 소통정보는 링크 좌표를 주지 않아 시 경계로 정확히 자를 수 없습니다. '
+            '세종 경계 사각형으로 받은 값이라 <b>인접 시·군 도로가 일부 섞일 수 '
+            '있습니다</b>(돌발상황은 좌표가 있어 실제 경계로 걸러집니다).</p>'
             % (head, rows, esc(legend)))
 
 

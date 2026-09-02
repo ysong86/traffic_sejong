@@ -28,7 +28,11 @@ DEFAULT_TIMEOUT = 20
 # 세종특별자치시 — 단일 자치시라 시군구가 없다.
 #   법정동코드 앞 5자리 36110. 도로교통공단 siDo/guGun 은 별도 코드체계라 config 에 둔다.
 SEJONG_BJD = "36110"
-SEJONG_BBOX = (127.05, 36.34, 127.45, 36.75)      # minX, minY, maxX, maxY (WGS84)
+# 시 외곽선의 실제 범위(assets/sejong_admin.json)에 여유 0.01도(약 1km)만 둔다.
+# 처음엔 넉넉히 (127.05, 36.34, 127.45, 36.75) 로 잡았는데, ITS 소통정보를 그
+# 범위로 부르니 대전 계족로 같은 남쪽 도로가 섞여 들어왔다. 사각형이라 이웃을
+# 완전히 걷어낼 수는 없지만, 7km 넘게 남는 여백은 그대로 오차가 된다.
+SEJONG_BBOX = (127.118, 36.397, 127.421, 36.743)  # minX, minY, maxX, maxY (WGS84)
 SEJONG_CENTER = (36.48, 127.289)
 
 
@@ -267,11 +271,50 @@ def norm_lat_lon(lat, lon):
     return round(a, 6), round(b, 6)
 
 
+_OUTLINE = None
+
+
+def _sejong_outline():
+    """시 외곽선 링들. 지도에 쓰는 것과 같은 자산을 그대로 재사용한다."""
+    global _OUTLINE
+    if _OUTLINE is None:
+        path = os.path.join(BASE_DIR, "assets", "sejong_admin.json")
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                _OUTLINE = json.load(fp).get("outline") or []
+        except (OSError, ValueError):
+            _OUTLINE = []
+    return _OUTLINE
+
+
+def _in_ring(lon, lat, ring) -> bool:
+    inside = False
+    for i in range(len(ring) - 1):
+        x1, y1 = ring[i][0], ring[i][1]
+        x2, y2 = ring[i + 1][0], ring[i + 1][1]
+        if (y1 > lat) != (y2 > lat):
+            cross = x1 + (lat - y1) * (x2 - x1) / ((y2 - y1) or 1e-12)
+            if lon < cross:
+                inside = not inside
+    return inside
+
+
 def in_sejong(lat, lon) -> bool:
+    """세종시 안인가. **사각형이 아니라 실제 시 경계**로 판정한다.
+
+    세종 남쪽은 대전 유성구와 톱니처럼 맞물려 있어, 사각형으로 자르면 북유성대로
+    같은 대전 도로가 '세종'으로 들어온다. 외곽선 자산이 없을 때만 사각형으로
+    떨어진다(그때는 넓게 잡는 편이 자료를 통째로 잃는 것보다 낫다).
+    """
     if lat is None or lon is None:
         return False
     x0, y0, x1, y1 = SEJONG_BBOX
-    return x0 <= lon <= x1 and y0 <= lat <= y1
+    if not (x0 <= lon <= x1 and y0 <= lat <= y1):
+        return False                       # 사각형 밖이면 볼 것도 없다(빠른 탈락)
+    rings = _sejong_outline()
+    if not rings:
+        return True
+    return any(_in_ring(lon, lat, ring) for ring in rings)
 
 
 def haversine_km(lat1, lon1, lat2, lon2) -> float:

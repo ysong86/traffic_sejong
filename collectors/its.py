@@ -18,9 +18,11 @@
 """
 from __future__ import annotations
 
-from .common import (SEJONG_BBOX, CollectError, http_get, http_json, http_xml_rows,
-                     in_sejong, norm_lat_lon, parse_stamp, pick, safe_url, stamp,
-                     to_float, to_int)
+import os
+
+from .common import (BASE_DIR, SEJONG_BBOX, CollectError, http_get, http_json,
+                     http_xml_rows, in_sejong, norm_lat_lon, parse_stamp, pick,
+                     safe_url, stamp, to_float, to_int)
 
 BASE = "https://openapi.its.go.kr:9443"
 
@@ -49,6 +51,33 @@ def flow_grade(speed) -> str:
 
 FLOW_LABEL = {"smooth": "원활", "slow": "서행", "delay": "지체", "jam": "정체",
               "unknown": "자료없음"}
+
+
+_MAJOR = None
+
+
+def major_road_names() -> set:
+    """지도에 그리는 도로(간선급) 이름 집합. assets/sejong_roads.json 을 그대로 쓴다.
+
+    ITS 표준링크에는 골목까지 다 들어 있다. 속도가 낮은 순으로 자르면 '대흥1길
+    0km/h' 같은 것만 남는데, 골목의 0km/h 는 주차·보행 탓이지 상황판이 말하려는
+    정체가 아니다. 지도에 이미 그리는 도로망을 기준으로 삼아 화면과 목록이 같은
+    도로를 가리키게 한다.
+    """
+    global _MAJOR
+    if _MAJOR is None:
+        import json as _json
+        path = os.path.join(BASE_DIR, "assets", "sejong_roads.json")
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                roads = _json.load(fp).get("roads") or []
+            # 집산·지선(collector)은 뺀다. 거기까지 넣으면 '대흥1길',
+            # '와룡로136번길' 같은 골목이 그대로 다시 올라온다.
+            _MAJOR = {r.get("name") for r in roads
+                      if r.get("name") and r.get("cls") != "collector"}
+        except (OSError, ValueError):
+            _MAJOR = set()
+    return _MAJOR
 
 
 def _bbox(cfg: dict) -> dict:
@@ -97,6 +126,11 @@ def fetch_flow(key: str, cfg: dict) -> list:
         speed = to_float(pick(row, "speed", "spd"))
         if speed is None:
             continue
+        travel = to_float(pick(row, "travelTime", "travel_time"))
+        # 속도 0 · 통행시간 0 은 '막혔다'가 아니라 '잰 값이 없다'는 뜻이다.
+        # 이걸 정체로 세면 한밤중에 간선도로가 멈춘 것처럼 보인다.
+        if speed <= 0 and not travel:
+            continue
         link = str(pick(row, "linkId", "link_id", default="") or "")
         out.append({
             "link": link,
@@ -104,7 +138,7 @@ def fetch_flow(key: str, cfg: dict) -> list:
                              default="이름 미상") or ""),
             "rank": str(pick(row, "roadRank", "road_rank", default="") or ""),
             "speed": round(speed, 1),
-            "travel_time": to_float(pick(row, "travelTime", "travel_time")),
+            "travel_time": travel,
             "grade": flow_grade(speed),
             "time": str(pick(row, "createdDate", "created_date", "date",
                              default="") or ""),
@@ -184,6 +218,9 @@ def collect(key: str, cfg: dict) -> dict:
 
     flow = out["flow"]
     speeds = [r["speed"] for r in flow]
+    # 요약은 **전체 링크**로 계산하고, 저장은 느린 쪽 일부만 남긴다.
+    # 세종 범위에도 표준링크가 만 개를 넘어 전부 담으면 캐시가 2MB 를 넘는데,
+    # 화면에 그리는 건 가장 느린 십여 개뿐이다.
     out["summary"] = {
         "links": len(flow),
         "avg_speed": round(sum(speeds) / len(speeds), 1) if speeds else None,
@@ -192,6 +229,23 @@ def collect(key: str, cfg: dict) -> dict:
         "accidents": sum(1 for e in out["events"]
                          if e["in_sejong"] and e["kind"] == "교통사고"),
     }
+    # 간선급만 남긴다. 자산과 이름이 안 맞아 너무 적게 남으면 원래 목록으로
+    # 되돌린다 — 빈 화면보다는 골목이라도 보이는 편이 낫다.
+    major = major_road_names()
+    picked = [r for r in flow if r["road"] in major]
+    out["flow_major_only"] = len(picked) >= 5
+    kept = picked if out["flow_major_only"] else flow
+
+    # 한 도로가 표준링크 수십 개로 쪼개져 있어 그대로 두면 목록이 같은 이름으로
+    # 도배된다(오송가락로가 일곱 줄). 도로마다 **가장 느린 구간 하나**만 남긴다.
+    # flow 는 이미 속도 오름차순이라 먼저 만난 것이 그 도로의 최저 속도다.
+    seen, unique = set(), []
+    for row in kept:
+        if row["road"] in seen:
+            continue
+        seen.add(row["road"])
+        unique.append(row)
+    out["flow"] = unique[:int(cfg.get("max_links") or 200)]
     return out
 
 

@@ -127,7 +127,12 @@ def _item(row: dict, layer: dict) -> dict | None:
     return {"layer": layer["id"], "layer_label": layer["label"],
             "icon": layer["icon"], "name": name.strip(),
             "lat": lat, "lon": lon, "notes": notes,
-            "addr": str(pick(row, "rdnmadr", "lnmadr", "adres", default="") or "")}
+            "addr": str(pick(row, "rdnmadr", "lnmadr", "adres", default="") or ""),
+            # 표준데이터가 스스로 밝히는 기준일자. 화면의 '자료 시점'은 우리가
+            # 언제 받아왔는지가 아니라 이 날짜를 보여줘야 한다 — 월~연 단위로
+            # 갱신되는 자료를 수집 시각으로 표시하면 방금 갱신된 것처럼 읽힌다.
+            "ref_date": str(pick(row, "referenceDate", "refrnDate", "crtrYmd",
+                                 "dataCrtrYmd", default="") or "")}
 
 
 def collect(key: str, cfg: dict) -> dict:
@@ -149,10 +154,16 @@ def collect(key: str, cfg: dict) -> dict:
             out["errors"].append("%s: %s" % (layer["label"], exc))
             continue
         items = [i for i in (_item(r, layer) for r in rows) if i]
+        ref = max((i["ref_date"] for i in items if i.get("ref_date")), default="")
         out["layers"].append({"id": layer["id"], "label": layer["label"],
                               "icon": layer["icon"], "count": len(items),
-                              "raw": len(rows), "endpoint": safe_url(url)})
+                              "raw": len(rows), "ref_date": ref,
+                              "endpoint": safe_url(url)})
         out["items"].extend(items)
+
+    # 레이어마다 기준일이 다르다. 가장 오래된 쪽이 이 겹 전체의 실제 신선도다.
+    dates = [r["ref_date"] for r in out["layers"] if r.get("ref_date")]
+    out["ref_date"] = min(dates) if dates else ""
     return out
 
 

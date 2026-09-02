@@ -38,26 +38,28 @@ LAYERS = [
      "endpoint": _ep("schoolzoneChild", "SchoolzoneChild"),
      "candidates": [_ep("schoolzoneChild", "SchoolzoneChild")]},
 
+    # 무단횡단은 웹 문서에 이 주소로 적혀 있었지만 실제로는 400 을 준다.
+    # (미승인이면 403 이 오므로 400 은 '그런 서비스가 없다'는 뜻이다.)
+    # 확정 전까지는 후보로만 둔다.
     {"id": "jaywalk", "label": "보행자 무단횡단", "group": "vuln", "weight": 2.0,
-     "endpoint": _ep("jaywalking", "Jaywalking"),
-     "candidates": [_ep("jaywalking", "Jaywalking")]},
+     "endpoint": "", "candidates": [
+         _ep("jaywalking", "Jaywalking"),
+         _ep("frequentzoneJaywalking", "FrequentzoneJaywalking"),
+         _ep("frequentzoneJaywalk", "FrequentzoneJaywalk")]},
 
     {"id": "freezing", "label": "결빙(도로 살얼음)", "group": "risk", "weight": 2.0,
      "endpoint": _ep("frequentzoneFreezing", "FrequentzoneFreezing"),
      "candidates": [_ep("frequentzoneFreezing", "FrequentzoneFreezing")]},
 
     # --- 아래는 요청주소가 공개 문서로 확인되지 않았다. probe 로 확정할 것.
+    # 아래 둘은 2026-09-02 실제 키로 타진해 확정했다(세종 자료 응답 확인).
     {"id": "child", "label": "어린이 보행", "group": "vuln", "weight": 3.0,
-     "endpoint": "", "candidates": [
-         _ep("frequentzoneChild", "FrequentzoneChild"),
-         _ep("childPedestrian", "ChildPedestrian"),
-         _ep("frequentzoneChildWalk", "FrequentzoneChildWalk")]},
+     "endpoint": _ep("frequentzoneChild", "FrequentzoneChild"),
+     "candidates": [_ep("frequentzoneChild", "FrequentzoneChild")]},
 
     {"id": "oldman", "label": "노인 보행", "group": "vuln", "weight": 3.0,
-     "endpoint": "", "candidates": [
-         _ep("frequentzoneOldman", "FrequentzoneOldman"),
-         _ep("frequentzoneElderly", "FrequentzoneElderly"),
-         _ep("oldmanPedestrian", "OldmanPedestrian")]},
+     "endpoint": _ep("frequentzoneOldman", "FrequentzoneOldman"),
+     "candidates": [_ep("frequentzoneOldman", "FrequentzoneOldman")]},
 
     {"id": "pedestrian", "label": "보행자 전체", "group": "vuln", "weight": 2.5,
      "endpoint": "", "candidates": [
@@ -65,10 +67,11 @@ LAYERS = [
          _ep("pedestrians", "Pedestrians"),
          _ep("frequentzoneWalk", "FrequentzoneWalk")]},
 
+    # 자전거는 타진에서 403(미승인)이 왔다 — 주소는 맞고 활용신청만 남았다는 뜻이다.
+    # 다른 후보들이 400(그런 서비스 없음)을 준 것과 대비된다.
     {"id": "bicycle", "label": "자전거", "group": "vuln", "weight": 2.0,
-     "endpoint": "", "candidates": [
-         _ep("frequentzoneBicycle", "FrequentzoneBicycle"),
-         _ep("bicycle", "Bicycle")]},
+     "endpoint": _ep("frequentzoneBicycle", "FrequentzoneBicycle"),
+     "candidates": [_ep("frequentzoneBicycle", "FrequentzoneBicycle")]},
 
     {"id": "motorcycle", "label": "이륜차", "group": "vuln", "weight": 2.0,
      "endpoint": "", "candidates": [
@@ -98,6 +101,10 @@ def _rows(url: str, key: str, year: int, sido: str, gugun: str,
         payload = http_json(url, params)
         err = portal_error(payload)
         if err:
+            # NODATA_ERROR(03) 는 고장이 아니다. 그 해 그 지역에 해당 유형의
+            # 다발지가 없다는 뜻이므로 빈 결과로 돌려준다(결빙이 대표적이다).
+            if "NODATA" in err.upper() or "(03)" in err:
+                return out
             raise CollectError("%s — %s" % (err, safe_url(url)))
         got = portal_rows(payload)
         out.extend(got)

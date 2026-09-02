@@ -282,8 +282,27 @@ def summarize(data: dict) -> list:
     spots = koroad.get("spots") or []
     base = [s for s in spots if s.get("layer") == "lg"]
     vuln = [s for s in spots if s.get("group") == "vuln"]
-    year = koroad.get("year")
-    year_note = "%d년 기준" % year if year else "연도 미상"
+    layers = koroad.get("layers") or []
+
+    # 레이어마다 공표 시점이 다르다. 전체 다발지는 2023년인데 스쿨존은 2024년인
+    # 식이다. 가장 최근 연도 하나로 뭉뚱그리면 '2024년 자료'라고 거짓말이 된다.
+    # 그래서 지표마다 그 지표가 실제로 쓴 연도를 적는다.
+    def _year_of(layer_id):
+        row = next((r for r in layers if r.get("id") == layer_id), None)
+        return row.get("year") if row else None
+
+    def _year_note(years):
+        got = sorted({y for y in years if y})
+        if not got:
+            return "연도 미상"
+        if len(got) == 1:
+            return "%d년 기준" % got[0]
+        return "%d~%d년 기준" % (got[0], got[-1])
+
+    base_note = _year_note([_year_of("lg")])
+    vuln_note = _year_note([r.get("year") for r in layers
+                            if r.get("group") == "vuln" and r.get("count")])
+    all_note = _year_note([r.get("year") for r in layers if r.get("count")])
 
     summary = its.get("summary") or {}
     events = summary.get("events")
@@ -298,13 +317,13 @@ def summarize(data: dict) -> list:
 
     return [
         {"label": "사고다발지", "value": fmt(len(base), 0, "곳"),
-         "sub": year_note + " · 사고 %s건" % fmt(sum(s["accidents"] for s in base)),
+         "sub": base_note + " · 사고 %s건" % fmt(sum(s["accidents"] for s in base)),
          "color": "var(--acc-base)"},
         {"label": "취약계층 다발지", "value": fmt(len(vuln), 0, "곳"),
-         "sub": "어린이·노인·보행·자전거·이륜차",
+         "sub": (vuln_note + " · 어린이·노인·보행"),
          "color": "var(--acc-vuln)"},
         {"label": "다발지 사망자", "value": fmt(deaths, 0, "명"),
-         "sub": year_note + " · 전 레이어 합",
+         "sub": all_note + " · 전 레이어 합",
          "color": "var(--acc-death)"},
         {"label": "지금 돌발상황",
          "value": ("—" if events is None else fmt(events, 0, "건")),
@@ -1182,6 +1201,9 @@ def _age_text(when) -> tuple:
         text = "%d시간 전" % int(minutes / 60)
     elif minutes < 1440 * 60:
         text = "%d일 전" % int(minutes / 1440)
+    elif minutes < 1440 * 365:
+        # 다섯 달을 "0.5년 전"이라 쓰면 읽는 사람이 한 번 더 계산해야 한다.
+        text = "%d개월 전" % max(2, int(minutes / (1440 * 30.4)))
     else:
         text = "%.1f년 전" % (minutes / (1440 * 365))
     return text, minutes
@@ -1196,14 +1218,30 @@ def freshness(data: dict) -> list:
     events = [e for e in (its.get("events") or []) if e.get("in_sejong")]
     flow = its.get("flow") or []
 
+    # 사고다발지는 레이어마다 공표 연도가 다르다. 화면에는 가장 **오래된** 쪽을
+    # 기준으로 잡는다 — "2024년 자료"라고 적어 놓고 그중 하나가 2023년이면
+    # 그 지표는 한 해 낡은 것이다. 신선도는 가장 약한 고리로 말해야 정직하다.
+    acc_years = sorted({r["year"] for r in (koroad.get("layers") or [])
+                        if r.get("year") and r.get("count")})
+    if acc_years:
+        acc_text = ("%d년 기준" % acc_years[0] if len(acc_years) == 1
+                    else "%d~%d년 기준" % (acc_years[0], acc_years[-1]))
+        acc_stamp = "%d-12-31 00:00" % acc_years[0]
+    else:
+        acc_text, acc_stamp = "—", ""
+
+    # 시설은 우리가 언제 받아왔는지가 아니라 자료가 밝히는 **기준일자**를 쓴다.
+    # 월~연 단위로 갱신되는 자료를 수집 시각으로 적으면 방금 갱신된 것처럼 읽힌다.
+    fac_ref = (facility.get("ref_date") or "").strip()
+
     stamps = {
         "events": (max((e.get("start") or "" for e in events), default="")
                    or (its.get("collected_at") if events else "")),
         "flow": (max((r.get("time") or "" for r in flow), default="")
                  or (its.get("collected_at") if flow else "")),
         "weather": (kma.get("now") or {}).get("base") or "",
-        "accident": ("%d-12-31 00:00" % koroad["year"]) if koroad.get("year") else "",
-        "facility": data.get("generated_at") if (facility.get("items")) else "",
+        "accident": acc_stamp,
+        "facility": fac_ref,
     }
     texts = {
         "events": ("%d건" % len(events)) if events else ("없음" if its.get("flow")
@@ -1212,9 +1250,9 @@ def freshness(data: dict) -> list:
         "flow": ("%s개 링크" % fmt(len(flow))) if flow else "—",
         "weather": (fmt((kma.get("now") or {}).get("temp"), 1, "℃")
                     if kma.get("now") else "—"),
-        "accident": ("%d년 기준" % koroad["year"]) if koroad.get("year") else "—",
-        "facility": ("%s개소" % fmt(len(facility.get("items") or [])))
-                    if facility.get("items") else "—",
+        "accident": acc_text,
+        "facility": (("%s개소" % fmt(len(facility.get("items") or [])))
+                     if facility.get("items") else "—"),
     }
 
     out = []
@@ -1251,6 +1289,9 @@ def render_freshness(data: dict) -> str:
     rows = freshness(data)
     chunks, seen = [], None
     for row in rows:
+        # 시설의 '언제'는 우리가 받은 시각이 아니라 자료의 기준일자다. 그렇게 밝힌다.
+        if row["key"] == "facility" and row["age"] != "—":
+            row["age"] = "기준일 " + row["age"]
         if row["tier"] != seen:
             seen = row["tier"]
             chunks.append('<span class="tier">%s</span>' % esc(seen))
@@ -1680,25 +1721,25 @@ def render(data: dict) -> str:
 %s
 <div class="grid">
   <section class="panel" data-view="dongs"><h2>읍면동별 집계
-    <span class="src">%s</span></h2>
+    <span class="src">%s</span><span class="cad year">연 단위 · 정적</span></h2>
     <p class="note">사고다발지·시설을 읍면동 경계로 나눠 센 값입니다.</p>
     %s</section>
   <section class="panel" data-view="layers"><h2>유형별 사고다발지
-    <span class="src">도로교통공단</span></h2>
+    <span class="src">도로교통공단</span><span class="cad year">연 1회 · 공표 1~2년 지연</span></h2>
     <p class="note">연 단위 통계입니다. 취약계층 유형이 기본계획 지표와 맞물립니다.</p>
     %s</section>
   <section class="panel" data-view="flow"><h2>실시간 소통
-    <span class="src">ITS 국가교통정보센터</span></h2>
+    <span class="src">ITS 국가교통정보센터</span><span class="cad live">실시간 · 5분</span></h2>
     %s</section>
   <section class="panel" data-view="risk"><h2>노면위험
-    <span class="src">기상청 실황·예보에서 산출</span></h2>
+    <span class="src">기상청 실황·예보에서 산출</span><span class="cad live">실시간 · 1시간</span></h2>
     %s</section>
   <section class="panel" data-view="mismatch"><h2>단속장비 없는 사고다발지
-    <span class="src">다발지 × 무인단속카메라</span></h2>
+    <span class="src">다발지 × 무인단속카메라</span><span class="cad year">연 단위 × 정적</span></h2>
     <p class="note">연 단위 사고자료와 정적 시설자료를 겹쳐 만든 지표입니다.</p>
     %s</section>
   <section class="panel" data-view="facility"><h2>안전시설 현황
-    <span class="src">공공데이터포털 표준데이터</span></h2>
+    <span class="src">공공데이터포털 표준데이터</span><span class="cad static">정적 · 월~연 갱신</span></h2>
     %s</section>
 </div>
 %s

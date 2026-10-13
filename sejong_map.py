@@ -56,7 +56,8 @@ HIT_WIDTH = 11.0        # 투명 히트영역 굵기(기준 폭 560 대비). 얇
 
 # 마커 모양 — 종류를 색이 아니라 형태로도 갈라 둔다(색약 대응).
 KIND_SHAPE = {"spot": "circle", "death": "star", "camera": "square",
-              "zone": "diamond", "event": "triangle", "cctv": "square"}
+              "zone": "diamond", "event": "triangle", "cctv": "square",
+              "signal": "pentagon", "bike": "bar"}
 
 # 읍면동 이름을 상시 표시할 최소 면적(도²).
 # 신도시 행정동은 너무 작아 겹치므로 확대했을 때만 띄운다.
@@ -180,6 +181,18 @@ def _shape(kind, color, size):
     if kind == "diamond":
         return ('<polygon points="0,%.1f %.1f,0 0,%.1f %.1f,0" style="fill:%s" '
                 'stroke-width="1"/>' % (-size, size, size, -size, color))
+    if kind == "pentagon":
+        pts = []
+        for i in range(5):
+            a = math.radians(-90 + i * 72)
+            pts.append("%.1f,%.1f" % (size * 1.1 * math.cos(a),
+                                      size * 1.1 * math.sin(a)))
+        return ('<polygon points="%s" style="fill:%s" stroke-width="1"/>'
+                % (" ".join(pts), color))
+    if kind == "bar":
+        return ('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="1" '
+                'style="fill:%s" stroke-width="1"/>'
+                % (-size * 1.15, -size * 0.42, size * 2.3, size * 0.84, color))
     if kind == "star":
         pts = []
         for i in range(10):

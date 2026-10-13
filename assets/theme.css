@@ -49,6 +49,10 @@
   --fac-camera: #6d28d9;
   --fac-child: #be185d;
   --fac-elder: #9d174d;
+  --fac-walk: #0f766e;
+  --fac-bike: #15803d;
+  --fac-light: #b45309;
+  --fac-sign: #1d4ed8;
 
   /* 돌발상황 */
   --ev-acc: #c02434;
@@ -134,6 +138,10 @@
   --fac-camera: #a78bfa;
   --fac-child: #f472b6;
   --fac-elder: #fb7185;
+  --fac-walk: #2dd4bf;
+  --fac-bike: #4ade80;
+  --fac-light: #fbbf24;
+  --fac-sign: #60a5fa;
 
   --ev-acc: #f87171;
   --ev-work: #f0b429;
@@ -1052,6 +1060,9 @@ table.tt thead th {
   background: var(--panel);
 }
 table.tt th:first-child, table.tt td:first-child { text-align: left; white-space: normal; }
+/* 표 안의 보조 칸 — 숫자 옆에 붙는 '원천' 같은 것. 본문보다 한 단 낮춰
+   읽는 순서를 흐리지 않게 한다. */
+table.tt td.sub { font-size: 11.5px; color: var(--fg-2); white-space: nowrap; }
 table.tt tbody tr { transition: background .14s ease; }
 table.tt tbody tr:hover { background: var(--panel-2); }
 /* 지도의 면과 짝지어 켜지는 행 */

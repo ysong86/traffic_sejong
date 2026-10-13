@@ -38,9 +38,17 @@ LAYER_COLOR = {
     "freezing": "var(--acc-freeze)",
     "death": "var(--acc-death)",
 }
+# 시설을 지도에서 어느 칩에 묶을지. 보호구역(면 성격)과 신호·표지(점 성격)는
+# 쓰임이 달라 따로 켜고 끌 수 있어야 한다 — '보호구역 안에 신호가 있나'를
+# 보려면 둘을 따로 다룰 수 있어야 하기 때문이다.
+FACILITY_KIND = {"camera": "camera", "child_zone": "zone", "elder_zone": "zone",
+                 "traffic_light": "signal", "crosswalk": "signal",
+                 "road_sign": "signal", "bike_road": "bike"}
+
 FACILITY_COLOR = {"camera": "var(--fac-camera)", "child_zone": "var(--fac-child)",
-                  "elder_zone": "var(--fac-elder)", "crosswalk": "var(--fac-child)",
-                  "bike_road": "var(--fac-elder)"}
+                  "elder_zone": "var(--fac-elder)", "crosswalk": "var(--fac-walk)",
+                  "bike_road": "var(--fac-bike)", "traffic_light": "var(--fac-light)",
+                  "road_sign": "var(--fac-sign)"}
 EVENT_COLOR = {"교통사고": "var(--ev-acc)", "공사": "var(--ev-work)",
                "기상": "var(--ev-weather)", "재난": "var(--ev-acc)",
                "행사": "var(--ev-etc)", "기타": "var(--ev-etc)"}
@@ -375,7 +383,7 @@ def build_points(data: dict) -> list:
         layer = item.get("layer") or ""
         points.append({
             "id": "fac-%d" % index,
-            "kind": "camera" if layer == "camera" else "zone",
+            "kind": FACILITY_KIND.get(layer, "zone"),
             "group": item.get("layer_label") or "시설",
             "name": item.get("name") or "이름 미상",
             "lat": item.get("lat"), "lon": item.get("lon"),
@@ -476,8 +484,9 @@ def detail_facility(item: dict) -> str:
                    " · ".join(x for x in [item.get("dong"), addr] if x)
                    or "세종특별자치시")
             + body
-            + '<div class="dnote">공공데이터포털 표준데이터입니다. '
-              '갱신이 드물어(월~연 단위) 최근 설치분은 빠져 있을 수 있습니다.</div>')
+            + '<div class="dnote">공공데이터포털 자료입니다(전국 표준데이터 '
+              '또는 세종시 직접 제공). 갱신이 드물어(월~연 단위) 최근 설치분은 '
+              '빠져 있을 수 있습니다.</div>')
 
 
 def detail_event(event: dict) -> str:
@@ -505,7 +514,8 @@ def detail_event(event: dict) -> str:
 
 MAP_LAYERS = [
     ("spot", "사고다발지"), ("death", "사망사고"), ("zone", "보호구역"),
-    ("camera", "단속카메라"), ("event", "돌발상황"),
+    ("camera", "단속카메라"), ("signal", "신호·횡단·표지"),
+    ("bike", "자전거도로"), ("event", "돌발상황"),
 ]
 ROAD_CHIPS = [("expressway", "고속"), ("brt", "BRT"), ("arterial", "주간선"),
               ("sub", "보조간선"), ("collector", "집산·지선")]
@@ -919,7 +929,8 @@ ZOOM_JS = r"""
 
 
 DOT_CLASS = {"spot": "dot", "death": "dot star", "camera": "dot sq",
-             "zone": "dot dia", "event": "dot tri", "cctv": "dot sq"}
+             "zone": "dot dia", "event": "dot tri", "cctv": "dot sq",
+             "signal": "dot pent", "bike": "dot bar"}
 
 
 def render_explorer(data: dict) -> str:
@@ -1245,12 +1256,18 @@ def render_facility(data: dict) -> str:
         pending = facility.get("pending") or []
         return ('<p class="note">시설 자료가 없습니다.%s</p>'
                 % (" 미확정: " + esc(", ".join(pending)) if pending else ""))
+    # '원천' 을 적는 이유 — 같은 레이어라도 전국 표준데이터에서 왔는지 세종시가
+    # 직접 올린 것에서 왔는지에 따라 촘촘함과 기준일이 꽤 다르다. 숫자만 보여
+    # 주면 둘을 같은 품질로 읽게 된다.
     rows = "".join(
         '<tr><td><span class="adchip" style="--h:0;background:%s;border-color:%s">'
-        '</span>%s</td><td class="num">%s</td><td class="num">%s</td></tr>'
+        '</span>%s</td><td class="num">%s</td><td class="num">%s</td>'
+        '<td class="sub">%s</td></tr>'
         % (FACILITY_COLOR.get(row["id"], "var(--fac-camera)"),
            FACILITY_COLOR.get(row["id"], "var(--fac-camera)"),
-           esc(row["label"]), fmt(row["count"]), fmt(row.get("raw")))
+           esc(row["label"]), fmt(row["count"]), fmt(row.get("raw")),
+           esc(" · ".join(x for x in (row.get("origin"),
+                                      (row.get("ref_date") or "")[:7]) if x)))
         for row in layers)
     pending = facility.get("pending") or []
     unavailable = facility.get("unavailable") or []
@@ -1263,8 +1280,16 @@ def render_facility(data: dict) -> str:
         tail += ('<p class="note" style="margin-top:11px">공공데이터포털에 전국 '
                  '단위로 올라와 있지 않아 넣을 수 없는 자료: <b>%s</b>.</p>'
                  % esc(", ".join(unavailable)))
+    # 레이어마다 기준일이 크게 다르다(카메라 2026 · 신호등 2020). 패널 맨 위의
+    # 자료 시점은 그중 가장 오래된 것을 쓰므로, 그것만 보면 2026년 카메라까지
+    # 낡아 보인다. 왼 그런지 한 줄 적어 둔다.
+    if len([r for r in layers if r.get("ref_date")]) > 1:
+        tail += ('<p class="note" style="margin-top:9px">패널 상단의 자료 시점은 '
+                 '레이어 중 <b>가장 오래된 기준일</b>입니다. 레이어마다 시점이 달라 '
+                 '표의 맨 오른쪽 칸을 같이 보셔야 합니다.</p>')
     return ('<div class="scrollx"><table class="tt">'
-            '<thead><tr><th>시설</th><th>세종 시내</th><th>응답 행</th></tr></thead>'
+            '<thead><tr><th>시설</th><th>세종 시내</th><th>응답 행</th>'
+            '<th>원천 · 기준</th></tr></thead>'
             '<tbody>%s</tbody></table></div>%s' % (rows, tail))
 
 
@@ -1696,7 +1721,7 @@ def has_any_data(data: dict) -> bool:
 def render_errors(data: dict) -> str:
     lines = []
     for key, label in (("koroad", "도로교통공단"), ("its", "ITS 국가교통정보센터"),
-                       ("facility", "표준데이터"), ("kma", "기상청")):
+                       ("facility", "안전시설"), ("kma", "기상청")):
         for message in ((data.get(key) or {}).get("errors") or []):
             lines.append("<li><b>%s</b> — %s</li>" % (esc(label), esc(message)))
     if not lines:
@@ -1874,14 +1899,15 @@ def render(data: dict) -> str:
     <p class="note">연 단위 사고자료와 정적 시설자료를 겹쳐 만든 지표입니다.</p>
     %s</section>
   <section class="panel" data-view="facility"><h2>안전시설 현황
-    <span class="src">공공데이터포털 표준데이터</span><span class="cad static">정적 · 월~연 갱신</span></h2>
+    <span class="src">공공데이터포털 · 세종시</span><span class="cad static">정적 · 월~연 갱신</span></h2>
     %s</section>
 </div>
 %s
 <footer>
   출처 — 도로교통공단 교통사고 다발지역·사망사고 정보(연 단위),
   ITS 국가교통정보센터 소통·돌발상황(실시간),
-  공공데이터포털 표준데이터(무인교통단속카메라·보호구역),
+  공공데이터포털 전국 표준데이터와 세종특별자치시 제공 자료
+  (무인교통단속카메라·보호구역·신호등·황단보도),
   기상청 단기예보 조회서비스(실황·예보).<br>
   지도의 읍면동 경계·도로망·지점은 모두 실제 좌표입니다.
   경계와 도로망 © OpenStreetMap 기여자 (ODbL).<br>

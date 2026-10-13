@@ -88,8 +88,10 @@ LAYERS = [
      "gone": "포털 제공 형태가 WMS(LINK) — REST 엔드포인트 없음",
      "endpoint": "", "candidates": []},
 
-    # 법규위반별 — 유형이 REST 고 타진에 403(미승인)이 왔다. 활용신청만 남았다.
-    # 신호위반·과속·중앙선 침범 등 원인별로 갈려 있어 대책을 집기 좋다.
+    # 법규위반별 — 2026-10-14 승인돼 붙었다. 이름과 달리 **위반유형을 고르는
+    # 요청변수가 없고 응답에도 유형 필드가 없다**(searchYearCd·siDo·guGun 뿐).
+    # 다른 다발지 레이어와 같은 모양의 지점 목록이다 — 원인별로 쪼개진 걸
+    # 기대하면 안 된다.
     {"id": "violation", "label": "법규위반별", "group": "risk", "weight": 2.0,
      "endpoint": _ep("frequentzoneLgrViolt", "FrequentzoneLgrViolt"),
      "candidates": [_ep("frequentzoneLgrViolt", "FrequentzoneLgrViolt")]},

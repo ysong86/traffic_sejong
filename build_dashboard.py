@@ -36,6 +36,9 @@ LAYER_COLOR = {
     "bicycle": "var(--acc-vuln)",
     "motorcycle": "var(--acc-vuln)",
     "freezing": "var(--acc-freeze)",
+    "drunk": "var(--acc-drunk)",
+    "truck": "var(--acc-vuln)",
+    "violation": "var(--acc-violation)",
     "death": "var(--acc-death)",
 }
 # 시설을 지도에서 어느 칩에 묶을지. 보호구역(면 성격)과 신호·표지(점 성격)는
@@ -1064,10 +1067,10 @@ def render_layers(data: dict) -> str:
     if unavailable:
         # '아직 못 찾았다'와 '애초에 안 준다'를 섞어 적으면, 더 찾으면 될 것처럼
         # 읽혀 헛수고를 부른다. 왜 못 쓰는지까지 적는다.
-        tail += ('<p class="note" style="margin-top:11px">공공데이터포털이 '
-                 'REST 로 제공하지 않아 넣을 수 없는 레이어: <b>%s</b>. '
-                 '지도 겹침(WMS) 형태로만 열려 있거나 제공이 끊긴 것이라 '
-                 '요청주소를 찾는 문제가 아닙니다.</p>'
+        tail += ('<p class="note" style="margin-top:11px">넣을 수 없는 레이어: '
+                 '<b>%s</b>. 어느 쪽이든 <b>요청주소를 찾는 문제가 아닙니다</b> — '
+                 '포털이 지도 겹침(WMS) 형태로만 열어 두었거나, 데이터셋 자체가 '
+                 '없거나, 제공이 끊긴 것입니다.</p>'
                  % esc(", ".join(unavailable)))
 
     return ('%s<div class="scrollx" style="margin-top:14px"><table class="tt">'

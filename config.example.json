@@ -22,6 +22,9 @@
       "pedestrian",
       "bicycle",
       "motorcycle",
+      "violation",
+      "drunk",
+      "truck",
       "death"
     ],
     "_엔드포인트": "요청주소가 문서로 확인된 것은 코드에 박혀 있습니다(lg, schoolzone, jaywalk, freezing). 나머지는 python run.py --probe --only koroad --save 로 확정한 뒤 여기에 자동으로 적힙니다.",

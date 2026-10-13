@@ -78,11 +78,29 @@ LAYERS = [
      "gone": "포털 제공 형태가 WMS(LINK) — REST 엔드포인트 없음",
      "endpoint": "", "candidates": []},
 
+    # 음주운전·화물차 — 2026-10 에 새로 올라온 데이터셋인데 둘 다 LINK 유형이다.
+    # 보행자·이류차와 같은 사정이라 찾을 수 있는 주소가 없다.
+    {"id": "drunk", "label": "음주운전", "group": "vuln", "weight": 3.0,
+     "gone": "포털 제공 형태가 WMS(LINK) — REST 엔드포인트 없음",
+     "endpoint": "", "candidates": []},
+
+    {"id": "truck", "label": "화물차", "group": "vuln", "weight": 2.0,
+     "gone": "포털 제공 형태가 WMS(LINK) — REST 엔드포인트 없음",
+     "endpoint": "", "candidates": []},
+
+    # 법규위반별 — 유형이 REST 고 타진에 403(미승인)이 왔다. 활용신청만 남았다.
+    # 신호위반·과속·중앙선 침범 등 원인별로 갈려 있어 대책을 집기 좋다.
+    {"id": "violation", "label": "법규위반별", "group": "risk", "weight": 2.0,
+     "endpoint": _ep("frequentzoneLgrViolt", "FrequentzoneLgrViolt"),
+     "candidates": [_ep("frequentzoneLgrViolt", "FrequentzoneLgrViolt")]},
+
+    # 사망사고 지점 — **포털에 아예 없다**(2026-10-14 확인). 도로교통공단의
+    # 오픈API 목록을 다 훑었지만 제목에 '사망'이 든 것은 하나도 없었다. 주소를
+    # 더 찾는 것은 헛수고다 — 다발지 레이어가 지점마다 사망자 수를 같이 주므로
+    # 그걸로 본다.
     {"id": "death", "label": "사망사고 지점", "group": "death", "weight": 5.0,
-     "endpoint": "", "candidates": [
-         _ep("frequentzoneDeath", "FrequentzoneDeath"),
-         "%s/deathAccident/getRestDeathAccident" % BASE,
-         "%s/accidentDeath/getRestAccidentDeath" % BASE]},
+     "gone": "포털에 전용 데이터셋 없음 — 다발지의 사망자 수로 대신 봄",
+     "endpoint": "", "candidates": []},
 ]
 
 LAYER_BY_ID = {row["id"]: row for row in LAYERS}

@@ -43,6 +43,8 @@
   --acc-school: #c02434;    /* 스쿨존 */
   --acc-walk: #d97706;      /* 보행·무단횡단 */
   --acc-freeze: #0891b2;    /* 결빙 */
+  --acc-drunk: #7c2d12;      /* 음주운전 */
+  --acc-violation: #4338ca;  /* 법규위반 */
   --acc-death: #8d1020;     /* 사망사고 */
 
   /* 시설 */
@@ -133,6 +135,8 @@
   --acc-school: #f87171;
   --acc-walk: #fbbf24;
   --acc-freeze: #22d3ee;
+  --acc-drunk: #fb923c;
+  --acc-violation: #818cf8;
   --acc-death: #ef4444;
 
   --fac-camera: #a78bfa;

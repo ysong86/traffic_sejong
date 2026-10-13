@@ -63,13 +63,14 @@
       "child_zone",
       "elder_zone",
       "crosswalk",
-      "bike_road"
+      "bike_road",
+      "traffic_light"
     ],
     "region_field": "ctprvnNm",
     "region_value": "세종특별자치시",
     "rows_per_page": 500,
     "max_pages": 30,
-    "_엔드포인트": "camera·child_zone 만 확인됐습니다. 나머지는 python run.py --probe --only facility --save 로 확정하십시오.",
+    "_엔드포인트": "오퍼레이션명은 규칙이 아니라 등록된 그대로다. 지어내 두드리면 400 만 나온다 — 포털 데이터셋 페이지에서 긁어와야 한다. 403 은 '주소는 맞고 미승인', 400 은 '그런 서비스 없음'이다.",
     "endpoints": {}
   },
   "kma": {

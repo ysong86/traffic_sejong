@@ -969,13 +969,22 @@ def render_layers(data: dict) -> str:
         for row in sorted(layers, key=lambda r: -r["accidents"])])
 
     pending = koroad.get("pending") or []
+    unavailable = koroad.get("unavailable") or []
     tail = ""
     if pending:
-        tail = ('<p class="note" style="margin-top:11px">아직 요청주소를 확정하지 '
-                '못한 레이어: <b>%s</b>. <code>python run.py --probe --only koroad</code> '
-                '로 확인한 뒤 <code>config.json</code> 의 '
-                '<code>koroad.endpoints</code> 에 넣으면 함께 표시됩니다.</p>'
-                % esc(", ".join(pending)))
+        tail += ('<p class="note" style="margin-top:11px">아직 요청주소를 확정하지 '
+                 '못한 레이어: <b>%s</b>. <code>python run.py --probe --only koroad</code> '
+                 '로 확인한 뒤 <code>config.json</code> 의 '
+                 '<code>koroad.endpoints</code> 에 넣으면 함께 표시됩니다.</p>'
+                 % esc(", ".join(pending)))
+    if unavailable:
+        # '아직 못 찾았다'와 '애초에 안 준다'를 섞어 적으면, 더 찾으면 될 것처럼
+        # 읽혀 헛수고를 부른다. 왜 못 쓰는지까지 적는다.
+        tail += ('<p class="note" style="margin-top:11px">공공데이터포털이 '
+                 'REST 로 제공하지 않아 넣을 수 없는 레이어: <b>%s</b>. '
+                 '지도 겹침(WMS) 형태로만 열려 있거나 제공이 끊긴 것이라 '
+                 '요청주소를 찾는 문제가 아닙니다.</p>'
+                 % esc(", ".join(unavailable)))
 
     return ('%s<div class="scrollx" style="margin-top:14px"><table class="tt">'
             '<thead><tr><th>유형</th><th>지점</th><th>사고</th><th>사망</th>'
@@ -1171,11 +1180,16 @@ def render_facility(data: dict) -> str:
            esc(row["label"]), fmt(row["count"]), fmt(row.get("raw")))
         for row in layers)
     pending = facility.get("pending") or []
+    unavailable = facility.get("unavailable") or []
     tail = ""
     if pending:
-        tail = ('<p class="note" style="margin-top:11px">요청주소 미확정: <b>%s</b>. '
-                '<code>python run.py --probe --only facility</code> 로 확인하십시오.</p>'
-                % esc(", ".join(pending)))
+        tail += ('<p class="note" style="margin-top:11px">요청주소 미확정: <b>%s</b>. '
+                 '<code>python run.py --probe --only facility</code> 로 확인하십시오.</p>'
+                 % esc(", ".join(pending)))
+    if unavailable:
+        tail += ('<p class="note" style="margin-top:11px">공공데이터포털에 전국 '
+                 '단위로 올라와 있지 않아 넣을 수 없는 자료: <b>%s</b>.</p>'
+                 % esc(", ".join(unavailable)))
     return ('<div class="scrollx"><table class="tt">'
             '<thead><tr><th>시설</th><th>세종 시내</th><th>응답 행</th></tr></thead>'
             '<tbody>%s</tbody></table></div>%s' % (rows, tail))

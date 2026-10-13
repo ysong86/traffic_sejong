@@ -38,14 +38,12 @@ LAYERS = [
      "endpoint": _ep("schoolzoneChild", "SchoolzoneChild"),
      "candidates": [_ep("schoolzoneChild", "SchoolzoneChild")]},
 
-    # 무단횡단은 웹 문서에 이 주소로 적혀 있었지만 실제로는 400 을 준다.
-    # (미승인이면 403 이 오므로 400 은 '그런 서비스가 없다'는 뜻이다.)
-    # 확정 전까지는 후보로만 둔다.
+    # 무단횡단 — 도로교통공단 데이터셋이 포털 목록에서 사라졌다(2026-10 확인).
+    # 남은 건 경기도 것뿐이라 세종에는 쓸 수 없다. 주소를 찾을 수 없는 게 아니라
+    # 제공이 끊긴 것이므로 후보도 비워 둔다.
     {"id": "jaywalk", "label": "보행자 무단횡단", "group": "vuln", "weight": 2.0,
-     "endpoint": "", "candidates": [
-         _ep("jaywalking", "Jaywalking"),
-         _ep("frequentzoneJaywalking", "FrequentzoneJaywalking"),
-         _ep("frequentzoneJaywalk", "FrequentzoneJaywalk")]},
+     "gone": "도로교통공단 제공 중단",
+     "endpoint": "", "candidates": []},
 
     {"id": "freezing", "label": "결빙(도로 살얼음)", "group": "risk", "weight": 2.0,
      "endpoint": _ep("frequentzoneFreezing", "FrequentzoneFreezing"),
@@ -61,11 +59,14 @@ LAYERS = [
      "endpoint": _ep("frequentzoneOldman", "FrequentzoneOldman"),
      "candidates": [_ep("frequentzoneOldman", "FrequentzoneOldman")]},
 
+    # 보행자 전체·이륜차 — 포털 데이터셋의 **API 유형이 LINK** 다(2026-10 확인).
+    # 포털이 REST 로 직접 주지 않고 기관 시스템으로 넘기는 유형이라
+    # apis.data.go.kr/B552061/... 엔드포인트가 아예 없다. 설명에도 "WMS 형태"라고
+    # 적혀 있다 — 지도 겹침으로만 제공된다. 서비스명을 아무리 맞춰도 400 이다.
+    # 작동하는 레이어(지자체별·보행노인·보행어린이·자전거)는 모두 REST 유형이다.
     {"id": "pedestrian", "label": "보행자 전체", "group": "vuln", "weight": 2.5,
-     "endpoint": "", "candidates": [
-         _ep("frequentzonePedestrian", "FrequentzonePedestrian"),
-         _ep("pedestrians", "Pedestrians"),
-         _ep("frequentzoneWalk", "FrequentzoneWalk")]},
+     "gone": "포털 제공 형태가 WMS(LINK) — REST 엔드포인트 없음",
+     "endpoint": "", "candidates": []},
 
     # 자전거는 타진에서 403(미승인)이 왔다 — 주소는 맞고 활용신청만 남았다는 뜻이다.
     # 다른 후보들이 400(그런 서비스 없음)을 준 것과 대비된다.
@@ -74,10 +75,8 @@ LAYERS = [
      "candidates": [_ep("frequentzoneBicycle", "FrequentzoneBicycle")]},
 
     {"id": "motorcycle", "label": "이륜차", "group": "vuln", "weight": 2.0,
-     "endpoint": "", "candidates": [
-         _ep("frequentzoneMotorcycle", "FrequentzoneMotorcycle"),
-         _ep("frequentzoneBicycleMotorcycle", "FrequentzoneBicycleMotorcycle"),
-         _ep("motorcycle", "Motorcycle")]},
+     "gone": "포털 제공 형태가 WMS(LINK) — REST 엔드포인트 없음",
+     "endpoint": "", "candidates": []},
 
     {"id": "death", "label": "사망사고 지점", "group": "death", "weight": 5.0,
      "endpoint": "", "candidates": [
@@ -192,7 +191,7 @@ def collect(key: str, cfg: dict) -> dict:
     overrides = cfg.get("endpoints") or {}
 
     out = {"sido": sido, "gugun": gugun, "layers": [], "spots": [], "errors": [],
-           "pending": [], "asked_year": start_year}
+           "pending": [], "unavailable": [], "asked_year": start_year}
 
     for layer_id in wanted:
         layer = LAYER_BY_ID.get(layer_id)
@@ -200,7 +199,12 @@ def collect(key: str, cfg: dict) -> dict:
             continue
         url = str(overrides.get(layer_id) or layer["endpoint"] or "").strip()
         if not url:
-            out["pending"].append(layer["label"])
+            # 주소를 아직 못 찾은 것과, 포털이 REST 로 안 주는 것은 다르다.
+            # 뭉뚱그리면 '더 찾아보면 된다'는 헛된 기대를 남긴다.
+            if layer.get("gone"):
+                out["unavailable"].append("%s(%s)" % (layer["label"], layer["gone"]))
+            else:
+                out["pending"].append(layer["label"])
             continue
 
         spots, used_year, last_err = [], None, None

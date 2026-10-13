@@ -39,29 +39,37 @@ LAYERS = [
      "note_fields": (("fcltyKndNm", "시설종류"), ("cctvInstlYn", "CCTV"),
                      ("mtrPolcNm", "관할경찰서"))},
 
-    # --- 아래는 오퍼레이션명이 문서로 확인되지 않았다. probe 로 확정할 것.
+    # 2026-10 포털 데이터셋 페이지에서 실제 오퍼레이션명을 확인했다.
+    # 이름을 지어내 두드리던 것(eldrl_dspsn_prtc_zn 등)은 전부 틀렸다 —
+    # 표준데이터 이름은 규칙이 아니라 등록된 그대로다. 페이지에서 긁어와야 한다.
     {"id": "elder_zone", "label": "노인·장애인 보호구역", "icon": "zone-elder",
-     "endpoint": "", "candidates": [
-         BASE + "/tn_pubr_public_eldrl_dspsn_prtc_zn_api",
-         BASE + "/tn_pubr_public_senior_prtc_zn_api",
-         BASE + "/tn_pubr_public_elderly_prtc_zn_api"],
+     "endpoint": BASE + "/tn_pubr_public_oldnddspsnprt_carea_api",
+     "candidates": [BASE + "/tn_pubr_public_oldnddspsnprt_carea_api"],
      "name_fields": ("fcltyNm", "instNm", "rdnmadr"),
      "note_fields": (("fcltyKndNm", "시설종류"), ("mtrPolcNm", "관할경찰서"))},
 
+    # 횡단보도 — 전국 단위 표준데이터를 포털에서 찾지 못했다(2026-10).
+    # 지자체별 파일데이터만 보인다. 이름을 지어내 두드려 봐야 400 만 돌아오므로
+    # 후보를 비워 둔다. 세종시 자료가 따로 있는지는 시 데이터포털에서 확인할 일이다.
     {"id": "crosswalk", "label": "횡단보도", "icon": "crosswalk",
-     "endpoint": "", "candidates": [
-         BASE + "/tn_pubr_public_cwalk_api",
-         BASE + "/tn_pubr_public_crosswalk_api",
-         BASE + "/tn_pubr_public_crswlk_api"],
+     "gone": "전국 표준데이터 없음 — 지자체 개별 자료만",
+     "endpoint": "", "candidates": [],
      "name_fields": ("rdnmadr", "lnmadr", "cwalkNm"),
      "note_fields": (("ctwlkKndNm", "종류"), ("tfcsfclInstlYn", "신호등"))},
 
     {"id": "bike_road", "label": "자전거도로", "icon": "bike",
-     "endpoint": "", "candidates": [
-         BASE + "/tn_pubr_public_bcycl_road_api",
-         BASE + "/tn_pubr_public_bicycle_road_api"],
+     "endpoint": BASE + "/tn_pubr_public_bike_road_api",
+     "candidates": [BASE + "/tn_pubr_public_bike_road_api"],
      "name_fields": ("bcyclRoadNm", "rdnmadr", "lnmadr"),
      "note_fields": (("bcyclRoadSeNm", "구분"), ("roadLt", "연장(m)"))},
+
+    # 신호등 — 횡단보도를 찾다 발견했다. 보호구역·단속장비와 같이 겹쳐 보면
+    # '신호 없는 다발지'를 짚을 수 있어 교통안전 쪽에 쓸모가 있다.
+    {"id": "traffic_light", "label": "신호등", "icon": "light",
+     "endpoint": BASE + "/tn_pubr_public_traffic_light_api",
+     "candidates": [BASE + "/tn_pubr_public_traffic_light_api"],
+     "name_fields": ("itlpc", "instlLcNm", "rdnmadr", "lnmadr"),
+     "note_fields": (("tfcsfclKndNm", "종류"), ("instlTy", "설치형태"))},
 ]
 
 LAYER_BY_ID = {row["id"]: row for row in LAYERS}
@@ -138,7 +146,7 @@ def _item(row: dict, layer: dict) -> dict | None:
 def collect(key: str, cfg: dict) -> dict:
     wanted = cfg.get("layers") or [row["id"] for row in LAYERS]
     overrides = cfg.get("endpoints") or {}
-    out = {"layers": [], "items": [], "errors": [], "pending": []}
+    out = {"layers": [], "items": [], "errors": [], "pending": [], "unavailable": []}
 
     for layer_id in wanted:
         layer = LAYER_BY_ID.get(layer_id)
@@ -146,7 +154,10 @@ def collect(key: str, cfg: dict) -> dict:
             continue
         url = str(overrides.get(layer_id) or layer["endpoint"] or "").strip()
         if not url:
-            out["pending"].append(layer["label"])
+            if layer.get("gone"):
+                out["unavailable"].append("%s(%s)" % (layer["label"], layer["gone"]))
+            else:
+                out["pending"].append(layer["label"])
             continue
         try:
             rows = _fetch_layer(url, key, cfg)

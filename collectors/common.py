@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import ssl
 import time
 import urllib.error
@@ -185,9 +186,46 @@ def http_get(url: str, params: dict | None = None, timeout: int = DEFAULT_TIMEOU
     detail = last
     if isinstance(last, urllib.error.HTTPError):
         detail = "HTTP %s %s" % (last.code, last.reason)
+        # 서버가 본문에 진짜 이유를 적어 보내는 경우가 많다. HTTP 코드만 보고
+        # 짐작하면 틀린다 — ITS 는 월 호출한도 초과에도 401 을 준다.
+        reason = _http_error_reason(last)
+        if reason:
+            detail += " — " + reason
     elif isinstance(last, urllib.error.URLError):
         detail = "연결 실패 (%s)" % last.reason
     raise CollectError("요청 실패: %s — %s" % (safe_url(url.split("?")[0]), detail))
+
+
+def _http_error_reason(exc) -> str:
+    """오류 응답 본문에서 사람이 읽을 메시지를 뽑는다. JSON·XML·평문 모두."""
+    try:
+        body = exc.read().decode("utf-8", "replace").strip()
+    except Exception:
+        return ""
+    if not body:
+        return ""
+    if body[:1] in "{[":
+        try:
+            node = json.loads(body)
+            for key in ("resultMsg", "returnAuthMsg", "message", "msg", "errMsg"):
+                found = _deep_get(node, key)
+                if found:
+                    return str(found)[:200]
+        except ValueError:
+            pass
+    text = re.sub(r"<[^>]+>", " ", body)
+    return re.sub(r"\s+", " ", text).strip()[:200]
+
+
+def _deep_get(node, key):
+    if isinstance(node, dict):
+        if node.get(key):
+            return node[key]
+        for value in node.values():
+            found = _deep_get(value, key)
+            if found:
+                return found
+    return None
 
 
 def http_json(url: str, params: dict | None = None, **kw):

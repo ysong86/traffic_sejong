@@ -66,13 +66,23 @@ def _ncst_bases(dt, back=3):
              (top - timedelta(hours=i)).strftime("%H00")) for i in range(back)]
 
 
-def _vilage_base(dt):
-    probe_at = dt - timedelta(minutes=15)          # 배포 지연 보정
-    for hour in reversed(_VILAGE_BASE_HOURS):
-        if probe_at.hour >= hour:
-            return probe_at.strftime("%Y%m%d"), "%02d00" % hour
-    prev = probe_at - timedelta(days=1)
-    return prev.strftime("%Y%m%d"), "2300"
+def _vilage_bases(dt, back=4):
+    """시도할 발표시각 목록 — 최신부터.
+
+    안내는 발표 +10분이면 받을 수 있다고 하지만 실제로는 더 늦다(20:00 발표분이
+    20:39 에도 NO_DATA 였다). 실황처럼 최신부터 시도해 없으면 뒤로 물러선다.
+    하나만 계산해 두면 발표 직후 몇십 분 동안 예보가 통째로 비어 버린다.
+    """
+    out, probe_at = [], dt - timedelta(minutes=10)
+    for _ in range(back):
+        hour = next((h for h in reversed(_VILAGE_BASE_HOURS) if probe_at.hour >= h),
+                    None)
+        if hour is None:
+            probe_at = probe_at.replace(hour=23) - timedelta(days=1)
+            hour = 23
+        out.append((probe_at.strftime("%Y%m%d"), "%02d00" % hour))
+        probe_at = probe_at.replace(hour=hour, minute=0) - timedelta(minutes=1)
+    return out
 
 
 def _pcp(text):
@@ -114,12 +124,24 @@ def fetch_now(key: str, nx: int, ny: int) -> dict:
 
 
 def fetch_forecast(key: str, nx: int, ny: int, hours: int = 24) -> dict:
-    base_date, base_time = _vilage_base(now_kst())
-    payload = _check(http_json(FCST_BASE + "/getVilageFcst", {
-        "serviceKey": _service_key(key), "pageNo": 1, "numOfRows": 1000,
-        "dataType": "JSON", "base_date": base_date, "base_time": base_time,
-        "nx": nx, "ny": ny,
-    }))
+    payload, base_date, base_time, last = None, None, None, None
+    for base_date, base_time in _vilage_bases(now_kst()):
+        try:
+            payload = _check(http_json(FCST_BASE + "/getVilageFcst", {
+                "serviceKey": _service_key(key), "pageNo": 1, "numOfRows": 1000,
+                "dataType": "JSON", "base_date": base_date, "base_time": base_time,
+                "nx": nx, "ny": ny,
+            }))
+        except CollectError as exc:
+            last = exc                      # NO_DATA(03) 이면 한 발표 전으로
+            payload = None
+            continue
+        if _items(payload):
+            break
+        payload = None
+    if payload is None:
+        raise last or CollectError("단기예보 응답이 비어 있습니다.")
+
     slots: dict[str, dict] = {}
     for item in _items(payload):
         when = "%s%s" % (item.get("fcstDate", ""), item.get("fcstTime", ""))

@@ -32,7 +32,7 @@ for stream in (sys.stdout, sys.stderr):
 import build_dashboard
 from collectors import demo, facility, its, kma, koroad
 from collectors.common import (BASE_DIR, CollectError, load_config, load_json,
-                               now_kst, save_json, stamp)
+                               now_kst, parse_stamp, save_json, stamp)
 
 LATEST = "latest.json"
 
@@ -51,8 +51,54 @@ SOURCES = [
 ]
 
 
-def collect(cfg: dict) -> dict:
-    """네 소스를 각각 수집한다. 한 곳이 죽어도 나머지는 살린다."""
+# 소스별 기본 재수집 간격(분). 자료가 바뀌는 주기보다 자주 부를 이유가 없다.
+#   사고다발지는 연 1회 공표, 시설 표준데이터는 월~연 단위인데 10분마다 받고
+#   있었다. 어린이보호구역은 시도명 필터가 안 먹어 **전국을 전수 스캔**하므로
+#   특히 아깝다. ITS 는 월 호출한도가 있어 10분마다 부르면 한 달을 못 간다
+#   (실제로 2026-10 에 한도 초과로 멈췄다).
+DEFAULT_INTERVAL = {"koroad": 720, "facility": 720, "its": 30, "kma": 30}
+
+
+# 실패한 수집분을 붙들고 있을 최대 시간(분). 오류를 캐시에 오래 가둬 두면
+# 복구가 그만큼 늦어지고, 그렇다고 매번 다시 부르면 죽은 API 를 하루 백 번씩
+# 두드린다(ITS 가 한도 초과일 때 그랬다). 그 사이를 잡은 값이다.
+RETRY_CAP = 60
+
+
+def _has_data(name: str, section: dict) -> bool:
+    """이 섹션이 화면에 내놓을 값을 실제로 갖고 있는가.
+
+    오류 줄이 있다고 실패는 아니다 — 도로교통공단은 자전거 레이어 하나가
+    미승인(403)이라 늘 오류를 달고 있지만 나머지 다섯 레이어는 멀쩡하다.
+    """
+    return {
+        "koroad": bool(section.get("spots")),
+        "its": bool(section.get("ok")),
+        "facility": bool(section.get("items")),
+        "kma": bool(section.get("now")),
+    }.get(name, False)
+
+
+def _reusable(previous, name: str, minutes) -> dict | None:
+    """직전 수집분이 아직 쓸 만하면 그대로 돌려준다. 아니면 None."""
+    if not minutes or not isinstance(previous, dict):
+        return None
+    prev = previous.get(name)
+    if not isinstance(prev, dict):
+        return None
+    at = parse_stamp(prev.get("_collected_at"))
+    if not at:
+        return None
+    age = (now_kst() - at).total_seconds() / 60.0
+    limit = float(minutes) if _has_data(name, prev) else min(float(minutes), RETRY_CAP)
+    return prev if 0 <= age < limit else None
+
+
+def collect(cfg: dict, previous: dict | None = None) -> dict:
+    """네 소스를 각각 수집한다. 한 곳이 죽어도 나머지는 살린다.
+
+    `previous` 를 주면 아직 새로 받을 때가 안 된 소스는 그대로 재사용한다.
+    """
     data = {"generated_at": stamp(now_kst()), "demo": False}
 
     for key, label, func, describe in SOURCES:
@@ -62,6 +108,15 @@ def collect(cfg: dict) -> dict:
             data[key] = {"errors": ["%s 인증키가 config.json 에 없습니다." % label]}
             print("  - %-12s 건너뜀 (인증키 없음)" % label)
             continue
+
+        minutes = section.get("min_interval_minutes", DEFAULT_INTERVAL.get(key, 0))
+        kept = _reusable(previous, key, minutes)
+        if kept is not None:
+            data[key] = kept
+            print("  - %-12s 그대로 씀 (%s 수집분, %s분마다)"
+                  % (label, kept.get("_collected_at", "?")[-5:], minutes))
+            continue
+
         print("  - %-12s 수집 중..." % label, end="", flush=True)
         try:
             data[key] = func(api_key, section)
@@ -72,6 +127,8 @@ def collect(cfg: dict) -> dict:
         except Exception as exc:                  # 예상 못 한 예외도 상황판에 남긴다
             data[key] = {"errors": ["예상치 못한 오류: %r" % exc]}
             print(" 오류: %r" % exc)
+        if isinstance(data[key], dict):
+            data[key]["_collected_at"] = stamp(now_kst())
     return data
 
 
@@ -196,7 +253,7 @@ def main(argv=None) -> int:
     elif args.collect:
         cfg = load_config(args.config)
         print("수집 시작 %s" % stamp(now_kst()))
-        data = collect(cfg)
+        data = collect(cfg, load_json(LATEST))
         data["site"] = cfg.get("site") or {}
         save_json(LATEST, data)
     else:

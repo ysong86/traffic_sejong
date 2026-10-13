@@ -199,15 +199,20 @@ def fetch_cctv(key: str, cfg: dict) -> list:
 
 
 def collect(key: str, cfg: dict) -> dict:
-    out = {"flow": [], "events": [], "cctv": [], "errors": [],
+    # ok 는 '둘 중 하나라도 실제로 받아왔는가'. summary 는 실패해도 만들어지므로
+    # 그것으로 연결 여부를 판단하면 안 된다 — 한도 초과로 둘 다 401 일 때도
+    # 화면 배지가 '연동됨'이라고 말해 버렸다.
+    out = {"flow": [], "events": [], "cctv": [], "errors": [], "ok": False,
            "collected_at": stamp(), "bbox": _bbox(cfg)}
 
     try:
         out["flow"] = fetch_flow(key, cfg)
+        out["ok"] = True
     except CollectError as exc:
         out["errors"].append("소통정보: %s%s" % (exc, _hint(exc)))
     try:
         out["events"] = fetch_events(key, cfg)
+        out["ok"] = True
     except CollectError as exc:
         out["errors"].append("돌발상황: %s%s" % (exc, _hint(exc)))
     if cfg.get("cctv"):
@@ -254,6 +259,11 @@ def _hint(exc) -> str:
     if "연결 실패" in text or "timed out" in text or "refused" in text.lower():
         return ("  ← ITS 는 국내 IP 에서만 응답합니다. 해외 서버/VPN 에서는 "
                 "수집되지 않습니다.")
+    # 한도 초과도 401 로 온다. 코드만 보고 '키가 틀렸다'고 적으면 엉뚱한 곳을
+    # 고치게 된다 — 실제로 멀쩡한 키를 의심하며 한참을 보냈다.
+    if "한도" in text or "4001" in text:
+        return ("  ← 키는 정상입니다. its.go.kr 로그인 → 마이페이지 → 인증키 "
+                "상세정보에서 호출 한도를 늘리거나 운영계정을 신청하세요.")
     if "401" in text or "인증" in text:
         return "  ← ITS 인증키는 공공데이터포털 키와 다릅니다. its.go.kr 에서 발급받으세요."
     return ""

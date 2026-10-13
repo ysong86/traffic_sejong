@@ -67,8 +67,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import build_dashboard  # noqa: E402
 from collectors import demo  # noqa: E402
-from collectors.common import (CollectError, load_config, now_kst, save_json,  # noqa: E402
-                               stamp)
+from collectors.common import (CollectError, load_config, load_json,  # noqa: E402
+                               now_kst, save_json, stamp)
 from run import SOURCES, collect  # noqa: E402
 
 API = "https://api.github.com"
@@ -184,7 +184,7 @@ def main(argv=None) -> int:
         data["site"] = cfg.get("site") or {}
     else:
         print("수집 시작 %s" % stamp(now_kst()))
-        data = collect(cfg)
+        data = collect(cfg, load_json("latest.json"))
         data["site"] = cfg.get("site") or {}
         save_json("latest.json", data)
 

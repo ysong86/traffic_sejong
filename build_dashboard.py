@@ -1589,7 +1589,8 @@ def source_status(data: dict) -> list:
     """
     got = {
         "koroad": bool((data.get("koroad") or {}).get("spots")),
-        "its": bool((data.get("its") or {}).get("summary")),
+        # summary 는 실패해도 만들어진다. 수집기가 남긴 ok 를 봐야 한다.
+        "its": bool((data.get("its") or {}).get("ok")),
         "facility": bool((data.get("facility") or {}).get("items")),
         "kma": bool((data.get("kma") or {}).get("now")),
     }

@@ -639,8 +639,14 @@ header.top .sub {
 .map .basemap image { image-rendering: auto; }
 .map.has-base .basemap { display: block; opacity: .78; filter: saturate(.55); }
 [data-theme="dark"] .map.has-base .basemap {
-  /* 밝은 타일을 어둡게 뒤집는다. 다크 화면에서 흰 지도는 눈을 때린다. */
+  /* 밝은 타일을 어둡게 뒤집는다. 다크 화면에서 흰 지도는 눈을 때린다.
+     다만 뒤집으면 지명 글씨까지 반대색이 돼 읽기 색다르다. 차선책이다. */
   opacity: .62; filter: invert(1) hue-rotate(180deg) saturate(.45) brightness(.92);
+}
+/* 제공처가 다크용 타일을 따로 주면(VWorld midnight) 뒤집지 않는다.
+   이미 어두운 지도라 더 손대면 오히려 망가진다. */
+[data-theme="dark"] .map.has-base.has-darkbase .basemap {
+  opacity: .72; filter: saturate(.7) brightness(1.05);
 }
 /* 배경지도를 깔면 읍면동 면은 비운다 — 안 그러면 지도를 덮는다.
    대신 경계선은 진하게 올린다. 바탕이 복잡해져 옅은 선은 묻힌다.

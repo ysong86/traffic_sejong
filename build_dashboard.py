@@ -511,13 +511,33 @@ ROAD_CHIPS = [("expressway", "고속"), ("brt", "BRT"), ("arterial", "주간선"
               ("sub", "보조간선"), ("collector", "집산·지선")]
 
 
-DEFAULT_BASEMAP = {
-    "provider": "osm",
-    "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    "attribution": "© OpenStreetMap 기여자",
-    "max_zoom": 18,
-    "label": "배경지도",
+# 배경지도 제공처. provider 만 적으면 나머지는 여기서 채운다.
+#
+# osm 은 자원봉사자가 운영하는 서버라 대외 공개 서비스로 상시 쓰기엔 염치없다.
+# vworld(국토교통부 공간정보 오픈플랫폼)는 국내 기관용으로 열려 있고 도로·지명이
+# 국내 기준으로 최신이라 교통 화면에는 이쪽이 맞다. 다만 **인증키와 도메인 등록**이
+# 필요하다 — vworld.kr 에서 받고, 쓸 주소를 그대로 등록해야 타일이 내려온다.
+BASEMAP_PRESETS = {
+    "osm": {
+        "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "attribution": "© OpenStreetMap 기여자",
+        "max_zoom": 18,
+    },
+    "vworld": {
+        # WMTS 는 {z}/{y}/{x}(레벨/행/열) 차례다. OSM 과 x·y 가 반대인데
+        # 자리표시자를 이름으로 바꿔치므로 순서가 달라도 그대로 동작한다.
+        "url": "https://api.vworld.kr/req/wmts/1.0.0/{key}/Base/{z}/{y}/{x}.png",
+        # 다크 화면용 타일이 따로 있다(midnight). 밝은 타일을 색 뒤집어
+        # 쓰는 것보다 훨씬 낫다 — 지명 글씨가 거울처럼 뷐지 않는다.
+        "dark_url": "https://api.vworld.kr/req/wmts/1.0.0/{key}/midnight/{z}/{y}/{x}.png",
+        "attribution": "© VWorld 국토교통부",
+        "max_zoom": 19,
+        "needs_key": True,
+    },
 }
+
+DEFAULT_BASEMAP = dict(provider="osm", label="배경지도",
+                       **BASEMAP_PRESETS["osm"])
 
 
 def basemap_config(site: dict) -> dict:
@@ -527,7 +547,24 @@ def basemap_config(site: dict) -> dict:
         return dict(DEFAULT_BASEMAP)
     if base is False or base == {}:
         return {}
-    return {**DEFAULT_BASEMAP, **base}
+
+    provider = str(base.get("provider") or "osm").strip().lower()
+    cfg = {"provider": provider, "label": "배경지도",
+           **BASEMAP_PRESETS.get(provider, {}), **base}
+    cfg = {k: v for k, v in cfg.items() if not k.startswith("_")}
+
+    key = str(cfg.pop("key", "") or "").strip()
+    if cfg.pop("needs_key", False) and (not key or key.startswith("여기에")):
+        # 키 없이 그대로 두면 타일이 전부 거부돼 배경이 텅 비게 된다.
+        # 조용히 비는 것보다 OSM 으로 물러서고 로그에 적는 편이 낫다.
+        print("배경지도: %s 인증키가 없어 OpenStreetMap 으로 둡니다."
+              " config.json 의 site.basemap.key 를 채우세요." % provider)
+        return dict(DEFAULT_BASEMAP)
+    if key:
+        for field in ("url", "dark_url"):
+            if cfg.get(field):
+                cfg[field] = str(cfg[field]).replace("{key}", key)
+    return cfg
 
 
 def render_maptools(points: list, site: dict | None = None) -> str:
@@ -684,6 +721,10 @@ ZOOM_JS = r"""
   var LON0=+svg.dataset.lon0, LAT1=+svg.dataset.lat1, KX=+svg.dataset.kx,
       PSCALE=+svg.dataset.scale, OFFX=+svg.dataset.offx, OFFY=+svg.dataset.offy;
   var tiles = new Map(), baseOn = false, baseTimer = null;
+  function baseDark(){
+    return document.documentElement.getAttribute('data-theme') === 'dark'
+           && !!BASEMAP.dark_url;
+  }
 
   function pxLon(lon){ return OFFX + (lon-LON0)*KX*PSCALE; }
   function pxLat(lat){ return OFFY + (LAT1-lat)*PSCALE; }
@@ -699,6 +740,24 @@ ZOOM_JS = r"""
   function clearTiles(){
     tiles.forEach(function(el){ el.remove(); });
     tiles.clear();
+  }
+
+  // 타일이 안 오는 것을 그냥 두면 배경이 텅 빈 채로 아무 말도 없다. VWorld 는
+  // 인증키가 틀려도 200 에 XML 을 돌려주므로 더 그렇다 — 출처줄에 사정을 적는다.
+  var baseWarned = false;
+  function baseNote(text){
+    var c = svg.querySelector('.basemap-credit');
+    if(c) c.textContent = text;
+  }
+  function baseFailed(){
+    if(baseWarned) return;
+    baseWarned = true;
+    baseNote('배경지도를 불러오지 못했습니다 — 인증키·도메인 등록 확인');
+  }
+  function baseLoaded(){
+    if(!baseWarned) return;
+    baseWarned = false;
+    if(BASEMAP.attribution) baseNote('배경지도 ' + BASEMAP.attribution);
   }
 
   function drawBase(){
@@ -743,10 +802,13 @@ ZOOM_JS = r"""
         img.setAttribute('width', (bx-ax+0.6).toFixed(2));
         img.setAttribute('height', (by-ay+0.6).toFixed(2));
         img.setAttribute('preserveAspectRatio','none');
-        var url = String(BASEMAP.url).replace('{z}',z).replace('{x}',ix)
+        var tpl = baseDark() ? BASEMAP.dark_url : BASEMAP.url;
+        var url = String(tpl).replace('{z}',z).replace('{x}',ix)
                     .replace('{y}',iy).replace('{s}','abc'[(ix+iy)%3]);
         img.setAttribute('href', url);
         img.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href', url);
+        img.addEventListener('error', baseFailed);
+        img.addEventListener('load', baseLoaded);
         baseLayer.appendChild(img);
         tiles.set(key, img);
       }
@@ -764,6 +826,17 @@ ZOOM_JS = r"""
 
   var credit = svg.querySelector('.basemap-credit');
   if(credit && BASEMAP.attribution) credit.textContent = '배경지도 ' + BASEMAP.attribution;
+
+  // 다크 전용 타일이 있으면 테마가 바뀔 때 갈아 끼운다. 색을 뒤집지 않아도
+  // 돼 지명 글씨가 거울처럼 뷐지 않는다. CSS 쪽 반전 필터도 이 클래스로 끊는다.
+  if(BASEMAP.dark_url){
+    svg.classList.add('has-darkbase');
+    new MutationObserver(function(){
+      if(!baseOn) return;
+      clearTiles(); drawBase();
+    }).observe(document.documentElement,
+               {attributes:true, attributeFilter:['data-theme']});
+  }
 
   // 겹·도로·표시 토글. 켠 상태를 기억한다.
   var KEY='st-map', saved={};

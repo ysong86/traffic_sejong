@@ -246,8 +246,13 @@ def scalebar(ax, km_len=5, x=127.135, y=36.405):
 
 # ── 마무리 ────────────────────────────────────────────────────────────────
 
-# 만든 그림 목록 — 끝에 index.html 을 짜는 데 쓴다.
+# 만든 그림 목록 — 끝에 index.html 과 워드 캡션 파일을 짜는 데 쓴다.
 MADE = []
+
+# 그림 안에 제목·설명·출처를 넣지 않는다. 보고서에 붙일 때는 캡션을 본문에서
+# 달기 때문에, 그림이 제목을 품고 있으면 제목이 두 번 나온다. 제목과 설명은
+# 따로 워드 파일로 뽑는다(make_doc.py).
+BARE = True
 
 
 def finish(fig, ax_or_none, title, subtitle="", source="", fname=""):
@@ -260,18 +265,19 @@ def finish(fig, ax_or_none, title, subtitle="", source="", fname=""):
     출처를 그림 안에 박아 두는 이유 — 보고서에 그림만 떼어 가도 근거가 따라
     가야 한다. 떼어 낸 그림의 출처를 나중에 다시 찾는 일이 제일 번거롭다.
     """
-    fig.suptitle(title, fontsize=15.5, fontweight="bold", color=INK,
-                 x=0.012, ha="left", y=0.975)
-    if subtitle:
-        fig.text(0.012, 0.930, subtitle, fontsize=10.5, color=INK2, ha="left",
-                 va="top", wrap=True)
-    if source:
-        fig.text(0.012, 0.012, source, fontsize=8.5, color=INK3, ha="left")
+    if not BARE:
+        fig.suptitle(title, fontsize=15.5, fontweight="bold", color=INK,
+                     x=0.012, ha="left", y=0.975)
+        if subtitle:
+            fig.text(0.012, 0.930, subtitle, fontsize=10.5, color=INK2,
+                     ha="left", va="top", wrap=True)
+        if source:
+            fig.text(0.012, 0.012, source, fontsize=8.5, color=INK3, ha="left")
     path = os.path.join(FIGDIR, fname)
     fig.savefig(path, dpi=200, bbox_inches="tight", pad_inches=0.22)
     plt.close(fig)
     size = os.path.getsize(path) // 1024
     MADE.append({"title": title, "subtitle": subtitle, "file": fname,
-                 "kb": size})
+                 "source": source, "kb": size})
     print("  %-34s %4d KB" % (fname, size))
     return path

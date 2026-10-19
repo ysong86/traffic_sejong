@@ -68,7 +68,8 @@ def fig_trend(P):
     _spark(axes[2], years, ftlt, SERIES[2], "치사율(사고 100건당 사망자)",
            fmt="%.2f", last_note="%.2f → %.2f" % (ftlt[0], ftlt[-1]))
     # 머리말이 두 줄이라 위를 넉넉히 비워야 패널 제목과 안 겹친다.
-    fig.subplots_adjust(wspace=0.16, top=0.60, bottom=0.12)
+    fig.subplots_adjust(wspace=0.16, bottom=0.12,
+                        top=0.88 if base.BARE else 0.60)
     return finish(fig, None, "세종시 교통사고 추이",
                   "사고는 늘고 사망자·치사율은 줄었다. 도시가 커지며 통행량이 "
                   "는 것과 사고 한 건의 결과가 가벼워진 것이 같이 들어 있다 — "

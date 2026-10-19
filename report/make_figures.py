@@ -651,9 +651,15 @@ def main():
           % (len(P["spots"]), len(P["items"]), len(P["dongs"])))
     for fn in FIGURES:
         fn(P)
-    index_page.write(base.MADE, (P["raw"].get("generated_at") or "")[:10],
-                     (len(P["spots"]), len(P["items"])))
-    print("끝. 그림 %d장 + index.html" % len(base.MADE))
+    stamp = (P["raw"].get("generated_at") or "")[:10]
+    counts = (len(P["spots"]), len(P["items"]))
+    index_page.write(base.MADE, stamp, counts)
+    # 그림에 제목이 없으므로 캡션용 워드 파일을 같이 뽑는다.
+    import make_doc
+    path = make_doc.build(base.MADE, stamp, counts)
+    print("  %-34s %4d KB" % (os.path.basename(path),
+                              os.path.getsize(path) // 1024))
+    print("끝. 그림 %d장 + index.html + 워드 목록" % len(base.MADE))
 
 
 if __name__ == "__main__":

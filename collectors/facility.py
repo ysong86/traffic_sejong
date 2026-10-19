@@ -81,8 +81,12 @@ LAYERS = [
      "name_fields": ("roadNmAddr", "addr", "rdnmadr", "lnmadr", "cwalkNm"),
      "note_fields": (("ctwlkKndNm", "종류"), ("tfcsfclInstlYn", "신호등"))},
 
+    # 자전거도로 — 전국 표준데이터에 **세종 행이 없다**(2026-10-19 포털에서 확인).
+    # 표준데이터 등록은 지자체 자율이라 빠진 곣이 생긴다. 세종시가 따로 올린 것도
+    # 없어 비워 둔다 — 주소를 두면 화면에 영원히 실패로 남는데, 그건 사실과 다르다.
     {"id": "bike_road", "label": "자전거도로", "icon": "bike",
-     "sources": [_std("tn_pubr_public_bike_road_api")],
+     "gone": "전국 표준데이터에 세종 자료 미등록",
+     "sources": [],
      "name_fields": ("bcyclRoadNm", "rdnmadr", "lnmadr"),
      "note_fields": (("bcyclRoadSeNm", "구분"), ("roadLt", "연장(m)"))},
 

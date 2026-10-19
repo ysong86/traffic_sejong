@@ -251,6 +251,10 @@ MADE = []
 
 
 def finish(fig, ax_or_none, title, subtitle="", source="", fname=""):
+    # 번호는 만들어진 차례대로 붙인다 — 순서를 바꿔도 제목과 파일명이 따라온다.
+    seq = len(MADE) + 1
+    title = "[그림 %d] %s" % (seq, title)
+    fname = "%02d_%s" % (seq, fname)
     """제목·부제·출처를 한 자리에서 붙이고 저장한다.
 
     출처를 그림 안에 박아 두는 이유 — 보고서에 그림만 떼어 가도 근거가 따라

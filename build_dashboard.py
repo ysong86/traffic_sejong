@@ -1444,6 +1444,7 @@ VIEW_SECTIONS = [
     ("fresh", "자료 시점"),
     ("alerts", "지금 이슈"),
     ("explorer", "지도 탐색"),
+    ("trend", "사고 추이"),
     ("dongs", "읍면동 집계"),
     ("layers", "유형별 다발지"),
     ("flow", "실시간 소통"),
@@ -1619,6 +1620,50 @@ SELF_ID = "traffic"
 def render_sisters() -> str:
     """다른 상황판 안내는 맨 위 공통 탭 줄(https://ysong86.github.io/nav.js)이 맡는다 — 머리말엔 두지 않는다."""
     return ""
+
+
+def render_trend(data: dict) -> str:
+    """세종시 **전체** 사고의 연도별 추이.
+
+    다발지역은 기준을 넘은 지점만 준다. '세종이 나아지고 있는가'에는 이
+    표만 답할 수 있어 따로 둔다. 치사율을 같이 보여 주는 이유 — 건수가
+    늘어도 치사율이 내려가면 나빠진 것이 아니다.
+    """
+    stat = data.get("stat") or {}
+    years = stat.get("years") or []
+    total = (stat.get("series") or {}).get("전체사고") or {}
+    if not years or not total:
+        return ('<p class="note">연도별 통계가 연결되지 않았습니다. '
+                '<code>config.json</code> 의 <code>stat</code> 항목과 '
+                '지자체별 대상 교통사고 통계 활용신청을 확인하십시오.</p>')
+
+    show = years[-6:]
+    rows = ""
+    for year in show:
+        v = total.get(str(year)) or {}
+        rows += ('<tr><td>%s년</td><td class="num">%s</td>'
+                 '<td class="num%s">%s</td><td class="num">%s</td>'
+                 '<td class="num">%s</td></tr>'
+                 % (year, fmt(v.get("acc")),
+                    " bad" if (v.get("dth") or 0) else "", fmt(v.get("dth")),
+                    fmt(v.get("inj")),
+                    "-" if v.get("ftlt") is None else "%.2f" % v["ftlt"]))
+
+    first, last = total.get(str(years[0])) or {}, total.get(str(years[-1])) or {}
+    note = ""
+    if first.get("acc") and last.get("acc"):
+        note = ('<p class="note" style="margin-top:11px">%d~%d년 사고 %s건 → '
+                '%s건(%+.0f%%), 사망 %s명 → %s명. <b>건수는 늘고 치사율은 '
+                '내렸습니다.</b> 도시가 커지며 통행량이 는 것과 사고 한 건의 '
+                '결과가 가벼워진 것이 같이 들어 있습니다.</p>'
+                % (years[0], years[-1], fmt(first["acc"]), fmt(last["acc"]),
+                   100.0 * (last["acc"] - first["acc"]) / first["acc"],
+                   fmt(first.get("dth")), fmt(last.get("dth"))))
+
+    return ('<div class="scrollx"><table class="tt">'
+            '<thead><tr><th>연도</th><th>사고</th><th>사망</th><th>부상</th>'
+            '<th>치사율</th></tr></thead><tbody>%s</tbody></table></div>%s'
+            % (rows, note))
 
 
 def render_viewbar() -> str:
@@ -1907,6 +1952,12 @@ def render(data: dict) -> str:
 %s
 %s
 <div class="grid">
+  <section class="panel" data-view="trend"><h2>교통사고 추이
+    <span class="src">도로교통공단 지자체별 통계</span>
+    <span class="cad year">연 1회 · 세종시 전체</span></h2>
+    <p class="note">다발지역이 아니라 <b>세종시 전체</b> 사고입니다.
+    기본계획 목표를 세울 때 보는 수치입니다.</p>
+    %s</section>
   <section class="panel" data-view="dongs"><h2>읍면동별 집계
     <span class="src">%s</span><span class="cad year">연 단위 · 정적</span></h2>
     <p class="note">사고다발지·시설을 읍면동 경계로 나눠 센 값입니다.</p>
@@ -1950,6 +2001,7 @@ def render(data: dict) -> str:
         note, render_alerts(data), render_viewbar(), kpis,
         render_freshness(data),
         render_explorer(data),
+        render_trend(data),
         esc(year_note), render_dongs(data),
         render_layers(data),
         render_flow(data),

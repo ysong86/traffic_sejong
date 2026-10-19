@@ -20,6 +20,7 @@ from matplotlib.patches import Circle
 import base
 import index_page
 import prep
+import trend_figures
 from base import (BLUES, GRID, INK, INK2, INK3, SERIES, SERIES3, STATUS,
                   basemap, finish, scalebar)
 
@@ -145,10 +146,10 @@ def fig01_hotspot_map(P):
                       markerfacecolor=SERIES3[i], markeredgecolor="#ffffff",
                       label=n) for i, n in enumerate(GROUP_NAMES)]
     return map_panels(
-        P, draw, "[그림 1] 세종시 교통사고 다발지역 분포",
+        P, draw, "세종시 교통사고 다발지역 분포",
         "도로교통공단이 지정한 사고다발지 13곳. 조치원읍 4곳과 신도심 생활권 "
         "9곳 두 덩어리로 갈린다 — 원인도 처방도 서로 다르다.",
-        "01_다발지분포.png", handles, "원의 크기 = 사고 건수",
+        "다발지분포.png", handles, "원의 크기 = 사고 건수",
         extra=lambda s: " · 사상 %d명" % s["casualties"])
 
 
@@ -173,10 +174,10 @@ def fig02_dong(P):
         ax.spines[side].set_visible(False)
     ax.text(0.0, 1.02, "읍면동 이름 왼쪽 숫자는 그 안의 다발지 지점 수",
             transform=ax.transAxes, fontsize=9.5, color=INK3)
-    return finish(fig, ax, "[그림 2] 읍면동별 사고다발지 사고 건수",
+    return finish(fig, ax, "읍면동별 사고다발지 사고 건수",
                   "조치원읍 한 곳에 지점 4곳·사고 45건이 몰려 있다. "
                   "신도심은 지점이 흩어져 있고 지점당 건수가 작다.",
-                  SRC, "02_읍면동별사고.png")
+                  SRC, "읍면동별사고.png")
 
 
 def fig03_type(P):
@@ -202,10 +203,10 @@ def fig03_type(P):
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     ax.legend(frameon=False, fontsize=10.5, loc="upper right")
-    return finish(fig, ax, "[그림 3] 사고 유형별 다발지·사고·사상자",
+    return finish(fig, ax, "사고 유형별 다발지·사고·사상자",
                   "유형은 서로 겹친다(한 지점이 전체이면서 노인 보행일 수 있다). "
                   "겹침을 감안해도 보행 취약계층 유형이 지점 수의 절반을 넘는다.",
-                  SRC, "03_유형별구성.png")
+                  SRC, "유형별구성.png")
 
 
 def fig04_spot_rank(P):
@@ -229,10 +230,10 @@ def fig04_spot_rank(P):
     for side in ("top", "right", "left"):
         ax.spines[side].set_visible(False)
     ax.legend(frameon=False, fontsize=10.5, loc="lower right")
-    return finish(fig, ax, "[그림 4] 사고다발지 13곳 사고·사상자 순위",
+    return finish(fig, ax, "사고다발지 13곳 사고·사상자 순위",
                   "상위 3곳(나성동·조치원 역전교차로·죽림회전교차로)이 전체 "
                   "사고의 절반을 넘는다. 사업 대상을 좁히는 첫 근거다.",
-                  SRC, "04_지점순위.png")
+                  SRC, "지점순위.png")
 
 
 def fig05_severity(P):
@@ -267,11 +268,11 @@ def fig05_severity(P):
     for side in ("top", "right", "left"):
         ax.spines[side].set_visible(False)
     ax.legend(frameon=False, fontsize=10.5, loc="lower right", ncols=3)
-    return finish(fig, ax, "[그림 5] 지점별 상해정도 구성",
+    return finish(fig, ax, "지점별 상해정도 구성",
                   "건수가 적어도 중상 비중이 100%인 지점이 둘 있다"
                   "(조치원 역전교차로 8명, 성지약국 5명). 건수만으로 "
                   "우선순위를 매기면 이런 곳이 뒤로 밀린다.",
-                  SRC, "05_상해정도.png")
+                  SRC, "상해정도.png")
 
 
 def fig06_freq_severity(P):
@@ -318,11 +319,11 @@ def fig06_freq_severity(P):
               bbox_to_anchor=(0.50, 0.90))
     ax.text(0.995, 0.015, "원의 크기 = 사상자 수", transform=ax.transAxes,
             ha="right", fontsize=9.5, color=INK3)
-    return finish(fig, ax, "[그림 6] 빈도-심각도 진단",
+    return finish(fig, ax, "빈도-심각도 진단",
                   "오른쪽은 자주 나는 곳, 위쪽은 한 번 나면 크게 다치는 곳이다. "
                   "둘은 거의 겹치지 않는다 — 빈도 대책(단속·신호 운영)과 심각도 "
                   "대책(속도 억제·구조 개선)을 따로 세워야 한다는 뜻이다.",
-                  SRC, "06_빈도심각도.png")
+                  SRC, "빈도심각도.png")
 
 
 def fig07_camera_gap(P):
@@ -356,10 +357,10 @@ def fig07_camera_gap(P):
                label="장비 공백 (300m 밖) %d곳" % len(gap)),
     ]
     return map_panels(
-        P, draw, "[그림 7] 사고다발지와 무인단속장비의 공간 불일치",
+        P, draw, "사고다발지와 무인단속장비의 공간 불일치",
         "다발지 13곳 중 2곳이 반경 300m 안에 단속장비가 없다. 둘 다 "
         "조치원읍이고, 둘 다 중상 비중이 높은 지점이다 — 단기 사업의 1순위 근거.",
-        "07_단속장비공백.png", handles,
+        "단속장비공백.png", handles,
         extra=lambda s: (" · 장비 %.0fm%s"
                          % ((s["cam_km"] or 0) * 1000,
                             "  ◀ 공백" if s in gap else "")))
@@ -417,9 +418,9 @@ def fig08_facility_matrix(P):
                         "진할수록 멀다. 빗금 칸은 그 권역에 등록된 자료가 "
                         "아예 없는 경우로, 시설이 없다는 뜻이 아니다(그림 11).",
             transform=ax.transAxes, fontsize=9.5, color=INK3)
-    return finish(fig, ax, "[그림 8] 사고다발지별 안전시설 접근성",
+    return finish(fig, ax, "사고다발지별 안전시설 접근성",
                   "지점마다 모자란 시설이 다르다 — 지점별 사업 내역을 짜는 바탕이다.",
-                  SRC, "08_시설접근성.png")
+                  SRC, "시설접근성.png")
 
 
 def fig09_vuln_zone(P):
@@ -460,11 +461,11 @@ def fig09_vuln_zone(P):
                label="그 밖의 다발지"),
     ]
     return map_panels(
-        P, draw, "[그림 9] 보행 취약계층 다발지와 보호구역·횡단보도",
+        P, draw, "보행 취약계층 다발지와 보호구역·횡단보도",
         "취약계층 다발지 8곳은 보호구역 %d개소 사이사이의 교차로에 생긴다 — "
         "구역을 더 지정하는 일보다 진입부 처리가 과제다. 조치원읍에 횡단보도 "
         "표시가 하나도 없는 것은 실제가 아니라 자료 공백이다(그림 11)."
-        % len(zones), "09_취약계층_보호구역.png", handles,
+        % len(zones), "취약계층_보호구역.png", handles,
         extra=lambda s: " · 사상 %d명" % s["casualties"])
 
 
@@ -519,11 +520,11 @@ def fig10_priority(P):
                               markeredgecolor="#ffffff", label=n)
                        for i, n in enumerate(GROUP_NAMES)],
               frameon=False, fontsize=10.5, loc="center right")
-    return finish(fig, ax, "[그림 10] 사업 우선순위 매트릭스",
+    return finish(fig, ax, "사업 우선순위 매트릭스",
                   "가로는 '얼마나 잦은가', 세로는 '단속장비가 얼마나 먼가'. "
                   "①사분면이 단기 사업 대상이고, ②는 시설 투자, ③은 운영·"
                   "단속 조정, ④는 관찰 대상이다. 원 크기는 중상자 수다.",
-                  SRC, "10_우선순위매트릭스.png")
+                  SRC, "우선순위매트릭스.png")
 
 
 def fig11_data_status(P):
@@ -569,11 +570,11 @@ def fig11_data_status(P):
         ax.text(0.345, i + 0.5, "%s %s" % (mark[state], state), va="center",
                 fontsize=10.5, color=color[state])
         ax.text(0.50, i + 0.5, note, va="center", fontsize=10, color=INK2)
-    return finish(fig, ax, "[그림 12] 기초자료 연동 현황",
+    return finish(fig, ax, "기초자료 연동 현황",
                   "상태는 색만이 아니라 기호와 글자로도 적는다. "
                   "'제공 안 됨'은 더 찾으면 되는 것이 아니라 공공데이터포털이 "
                   "REST로 주지 않거나 세종 자료가 등록되지 않은 항목이다.",
-                  SRC, "12_자료연동현황.png")
+                  SRC, "자료연동현황.png")
 
 
 def fig11_data_gap(P):
@@ -625,16 +626,18 @@ def fig11_data_gap(P):
         ax.spines[side].set_visible(False)
     ax.legend(frameon=False, fontsize=10.5, loc="lower center",
               bbox_to_anchor=(0.5, -0.15), ncols=2)
-    return finish(fig, ax, "[그림 11] 사고는 조치원, 자료는 신도심",
+    return finish(fig, ax, "사고는 조치원, 자료는 신도심",
                   "막대 안 숫자는 실제 개수다. 조치원읍은 사고 건수의 절반 "
                   "가까이를 차지하는데 횡단보도·도로안전표지 등록은 0건이다. "
                   "현장에 시설이 없다는 뜻이 아니라 공개자료에 올라 있지 "
                   "않다는 뜻이다 — 기본계획의 첫 과제는 이 공백을 메우는 "
                   "전수조사다.",
-                  SRC, "11_자료공백.png")
+                  SRC, "자료공백.png")
 
 
-FIGURES = [fig01_hotspot_map, fig02_dong, fig03_type, fig04_spot_rank,
+# 추이가 먼저다. '세종 전체가 나아지고 있는가'에 답한 다음에야
+# '어디가 위험한가'가 뜻을 갖는다.
+FIGURES = trend_figures.FIGURES + [fig01_hotspot_map, fig02_dong, fig03_type, fig04_spot_rank,
            fig05_severity, fig06_freq_severity, fig07_camera_gap,
            fig08_facility_matrix, fig09_vuln_zone, fig10_priority,
            fig11_data_gap, fig11_data_status]

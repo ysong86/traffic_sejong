@@ -30,7 +30,7 @@ for stream in (sys.stdout, sys.stderr):
         pass
 
 import build_dashboard
-from collectors import demo, facility, its, kma, koroad
+from collectors import demo, facility, its, kma, koroad, koroad_stat
 from collectors.common import (BASE_DIR, CollectError, load_config, load_json,
                                now_kst, parse_stamp, save_json, stamp)
 
@@ -40,6 +40,7 @@ SOURCES = [
     ("koroad", "도로교통공단", koroad.collect,
      lambda d: "다발지 %d곳 / 레이어 %d"
                % (len(d.get("spots") or []), len(d.get("layers") or []))),
+    ("stat", "교통사고 통계", koroad_stat.collect, koroad_stat.describe),
     ("its", "ITS 소통·돌발", its.collect,
      lambda d: "링크 %d / 돌발 %d"
                % (len(d.get("flow") or []), len(d.get("events") or []))),
@@ -59,7 +60,8 @@ SOURCES = [
 #   ITS 는 2026-10 에 서비스당 월 15,000건(운영용)으로 늘렸다. 10분 주기면
 #   서비스당 월 4,464건이라 여유가 크다. 한도가 다시 줄면 config 의
 #   its.min_interval_minutes 로 늦추면 된다(30분=1,488건, 60분=744건).
-DEFAULT_INTERVAL = {"koroad": 720, "facility": 720, "its": 10, "kma": 30}
+DEFAULT_INTERVAL = {"koroad": 720, "stat": 1440, "facility": 720,
+                    "its": 10, "kma": 30}
 
 
 # 실패한 수집분을 붙들고 있을 최대 시간(분). 오류를 캐시에 오래 가둬 두면
@@ -76,6 +78,7 @@ def _has_data(name: str, section: dict) -> bool:
     """
     return {
         "koroad": bool(section.get("spots")),
+        "stat": bool(section.get("years")),
         "its": bool(section.get("ok")),
         "facility": bool(section.get("items")),
         "kma": bool(section.get("now")),

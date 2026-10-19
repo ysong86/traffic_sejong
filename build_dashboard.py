@@ -1085,16 +1085,16 @@ def render_dongs(data: dict) -> str:
     if not rows:
         return '<p class="note">읍면동에 배정할 지점이 없습니다.</p>'
 
-    kind_label = {"eup": "읍", "myeon": "면", "dong": "동", "none": ""}
+    # 이름이 이미 '조치원읍'·'금남면'이라 뒤에 종류를 또 붙이면 '조치원읍 읍'이
+    # 된다. 종류는 이름이 이미 말하고 있으니 적지 않는다.
     body = "".join(
         '<tr data-dong="%s"><td><span class="adchip" style="--h:%d"></span>%s'
-        '<span class="adkind">%s</span></td>'
+        '</td>'
         '<td class="num">%s</td><td class="num">%s</td>'
         '<td class="num%s">%s</td><td class="num">%s</td>'
         '<td class="num">%s</td><td class="num">%s</td>'
         '<td class="num%s">%s</td></tr>'
         % (esc(row["name"]), row["hue"], esc(row["name"]),
-           kind_label.get(row["kind"], ""),
            fmt(row["spots"]), fmt(row["accidents"]),
            " bad" if row["deaths"] else "", fmt(row["deaths"]),
            fmt(row["casualties"]), fmt(row["vuln"]),

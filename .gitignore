@@ -7,3 +7,7 @@ site/
 __pycache__/
 *.pyc
 .DS_Store
+
+# 보고용 그림은 생성물이다. 소스(report/*.py)만 저장소에 둔다.
+report/figures/
+report/index.html

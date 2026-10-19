@@ -173,6 +173,68 @@ def basemap(ax, show_roads=True, road_classes=("expressway", "brt", "arterial"))
     return adm
 
 
+# 사고다발지는 조치원읍과 신도심 두 덩어리에 몰려 있다. 시 전체를 한 장에
+# 그리면 점이 두 점처럼 뭉쳐 이름표가 서로 겹친다. 전체 지도 한 장 + 확대
+# 두 장으로 나눠 그린다 — 전체는 '어디인지', 확대는 '무엇인지'를 맡는다.
+CLUSTERS = [("조치원읍 일원", 36.56, 90.0), ("신도심 생활권", -90.0, 36.56)]
+
+
+def cluster_bounds(spots, lat_min, lat_max, pad=0.013):
+    pts = [s for s in spots if lat_min <= s["lat"] <= lat_max]
+    if not pts:
+        return None
+    lo = min(s["lon"] for s in pts) - pad
+    hi = max(s["lon"] for s in pts) + pad
+    la = min(s["lat"] for s in pts) - pad
+    lb = max(s["lat"] for s in pts) + pad
+    # 너무 납작하거나 홀쭉하면 보기 나쁘다. 최소 크기를 준다.
+    if hi - lo < 0.030:
+        c = (hi + lo) / 2
+        lo, hi = c - 0.015, c + 0.015
+    if lb - la < 0.024:
+        c = (lb + la) / 2
+        la, lb = c - 0.012, c + 0.012
+    return lo, la, hi, lb
+
+
+def panel_layout(fig):
+    """왼쪽부터 지점 목록 · 전체 지도 · 확대 두 장.
+
+    목록을 지도 위에 얹었더니 경계선과 이름표를 덮었다. 글과 그림이 자리를
+    다투면 둘 다 진다 — 칸을 따로 준다.
+    """
+    gs = fig.add_gridspec(2, 3, width_ratios=[0.86, 1.18, 1.0], wspace=0.03,
+                          hspace=0.06)
+    ax_list = fig.add_subplot(gs[:, 0])
+    ax_list.axis("off")
+    return ax_list, fig.add_subplot(gs[:, 1]), fig.add_subplot(gs[0, 2]), \
+        fig.add_subplot(gs[1, 2])
+
+
+def zoom_to(ax, box, title=""):
+    lo, la, hi, lb = box
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(la, lb)
+    for side in ax.spines.values():
+        side.set_visible(True)
+        side.set_color("#c9c7c0")
+    if title:
+        ax.text(0.02, 0.965, title, transform=ax.transAxes, va="top",
+                fontsize=11, fontweight="bold", color=INK2, zorder=10,
+                bbox=dict(boxstyle="round,pad=0.26", fc="#ffffff", ec="none",
+                          alpha=0.88))
+
+
+def mark_box(ax, box, label):
+    """전체 지도 위에 확대 범위를 네모로 표시한다."""
+    lo, la, hi, lb = box
+    ax.add_patch(plt.Rectangle((lo, la), hi - lo, lb - la, fill=False,
+                               edgecolor=INK2, linewidth=1.1,
+                               linestyle=(0, (4, 2)), zorder=8))
+    ax.text((lo + hi) / 2, lb + 0.006, label, ha="center", fontsize=10,
+            color=INK2, zorder=8)
+
+
 def scalebar(ax, km_len=5, x=127.135, y=36.405):
     """축척 막대. 지도에서 '얼마나 먼가'를 눈으로 가늠하게 한다."""
     deg = km_len / (111.32 * math.cos(math.radians(36.52)))
@@ -183,6 +245,10 @@ def scalebar(ax, km_len=5, x=127.135, y=36.405):
 
 
 # ── 마무리 ────────────────────────────────────────────────────────────────
+
+# 만든 그림 목록 — 끝에 index.html 을 짜는 데 쓴다.
+MADE = []
+
 
 def finish(fig, ax_or_none, title, subtitle="", source="", fname=""):
     """제목·부제·출처를 한 자리에서 붙이고 저장한다.
@@ -201,5 +267,7 @@ def finish(fig, ax_or_none, title, subtitle="", source="", fname=""):
     fig.savefig(path, dpi=200, bbox_inches="tight", pad_inches=0.22)
     plt.close(fig)
     size = os.path.getsize(path) // 1024
+    MADE.append({"title": title, "subtitle": subtitle, "file": fname,
+                 "kb": size})
     print("  %-34s %4d KB" % (fname, size))
     return path

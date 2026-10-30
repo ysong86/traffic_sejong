@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""수집 결과(dict) → 단일 HTML 상황판.
+"""수집 결과(dict) → 단일 HTML 읽기.
 
 외부 자산을 링크하지 않는다. CSS·JS·SVG 를 한 파일에 넣어 어디에 갖다 놔도
 그대로 열린다(GitHub Pages, 사내 공유폴더, 이메일 첨부).
@@ -1112,7 +1112,7 @@ def render_dongs(data: dict) -> str:
 
 
 def render_flow(data: dict) -> str:
-    """실시간 소통 — 느린 구간부터. 상황판에서 먼저 봐야 하는 쪽이 위다."""
+    """실시간 소통 — 느린 구간부터. 읽기에서 먼저 봐야 하는 쪽이 위다."""
     its = data.get("its") or {}
     flow = its.get("flow") or []
     if not flow:
@@ -1600,17 +1600,17 @@ def load_css() -> str:
         return FALLBACK_CSS
 
 
-# 함께 보는 상황판 — 네 개가 같은 도시를 다른 각도로 본다. 서로 오갈 길이 없으면
+# 함께 보는 읽기 — 네 개가 같은 도시를 다른 각도로 본다. 서로 오갈 길이 없으면
 # 각각 따로 찾아들어야 하고, 그러면 같이 보라고 만든 보람이 사라진다.
 # 생활권·상가공실 화면에도 같은 블록이 있어 모양을 그쪽에 맞추었다.
 SISTER_SITES = [
-    ("livingzone", "세종 생활권 재구조화 상황판",
+    ("livingzone", "세종 생활권 읽기",
      "https://ysong86.github.io/zone_sejong/"),
-    ("vacant", "세종 상가공실 상황판",
+    ("vacant", "세종 상가공실 읽기",
      "https://ysong86.github.io/vacant_sejong/"),
-    ("water", "세종시 물환경 상황판",
+    ("water", "세종시 물환경 읽기",
      "https://ysong86.github.io/water_sejong/"),
-    ("traffic", "세종시 교통안전 상황판",
+    ("traffic", "세종시 교통안전 읽기",
      "https://ysong86.github.io/traffic_sejong/"),
 ]
 
@@ -1618,7 +1618,7 @@ SELF_ID = "traffic"
 
 
 def render_sisters() -> str:
-    """다른 상황판 안내는 맨 위 공통 탭 줄(https://ysong86.github.io/nav.js)이 맡는다 — 머리말엔 두지 않는다."""
+    """다른 읽기 안내는 맨 위 공통 탭 줄(https://ysong86.github.io/nav.js)이 맡는다 — 머리말엔 두지 않는다."""
     return ""
 
 
@@ -1932,11 +1932,11 @@ def render(data: dict) -> str:
     return """<!doctype html>
 <html lang="ko" data-theme="light"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>세종시 교통안전 상황판</title>
+<title>세종시 교통안전 읽기</title>
 %s
 <style>%s</style>%s</head><body><script src="https://ysong86.github.io/nav.js" data-site="traffic"></script><div class="wrap">
 <header class="top">
-  <h1>세종시 교통안전 상황판</h1>
+  <h1>세종시 교통안전 읽기</h1>
   %s
   <span class="grow"></span>
   %s
@@ -1992,7 +1992,7 @@ def render(data: dict) -> str:
   사고다발지는 <b>1년치 사고를 반경 150m 로 묶어</b> 고른 지점이며 공표가 1~2년
   늦습니다. 노면위험도는 기온·강수·습도에서 추정한 참고값으로 노면 온도 실측이
   아닙니다. 실제 교통통제·대응 판단은 관계기관 공식 발표를 따르십시오.<br>
-  마지막 갱신 %s · 세종특별자치시 교통안전 상황판%s
+  마지막 갱신 %s · 세종특별자치시 교통안전 읽기%s
   %s
   %s
 </footer>
